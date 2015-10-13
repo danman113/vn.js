@@ -1,0 +1,7 @@
+{
+	"name":"scene1",
+	"frames":[
+		{"text":"This is text","objects":[{"x":40,"y":50}]}
+	],
+	"nextframe":"scene2"
+}
