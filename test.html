@@ -12,14 +12,11 @@
 	<body>
 	<script>
 		var visualNovel = new vn();
-		visualNovel.settings.width = window.innerWidth;
-		visualNovel.settings.height = window.innerHeight;
-		
 		visualNovel.imagePaths = ["/Sys/HOME.png"];
 		visualNovel.audioPaths = ["test.mp3"];
 		visualNovel.scenePaths = ["scene1.json"];
 		visualNovel.UI.push(new visualNovel.button({x:1,y:1,width:100,height:100,label:"EAT SHIT"}));
-		visualNovel.UI.push(new visualNovel.responsiveButton({xPercent:0.25,yPercent:0.5,widthPercent:0.5,height:100,label:"Responsive"}));
+		visualNovel.UI.push(new visualNovel.responsiveButton({xPercent:0.25,yPercent:0.5,widthPercent:0.5,heightPercent:0.1,label:"Responsive"}));
 		visualNovel.keybindings.push(new visualNovel.key("left",37,78));
 		visualNovel.init(document.body, true);
 	</script>

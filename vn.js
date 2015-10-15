@@ -1,6 +1,9 @@
 /*======= Todo ========*\
-[ ] Add better mousehandling for onclicks
-[ ] Add button manager
+[X] Add children to draw
+[X] Add addChild method
+[X] Add better mousehandling for onclicks
+[X] Add button manager
+[X] Add button click manager
 [ ] Add imageButton
 [ ] Add textArea
 [ ] ParseSettings
@@ -56,7 +59,7 @@ function vn(settings){
 	//IO
 	this.keys = {};
 	this.keybindings = [];
-	this.mouse = {x:-1, y:-1, up:true, hover:-1};
+	this.mouse = {x:-1, y:-1, up:true, hover:-1,lastDown:false,click:false,clickRelease:false};
 
 
 	//======= Methods ========\\
@@ -112,17 +115,37 @@ function vn(settings){
 		}
 	};
 
+	var clickManager = function(){
+		if(!scope.mouse.lastMouseUp  && scope.mouse.up){
+			scope.mouse.clickRelease=true;
+		} else {
+			scope.mouse.clickRelease=false;
+		}
+		if(scope.mouse.lastMouseUp  && !scope.mouse.up){
+			scope.mouse.click=true;
+		} else {
+			scope.mouse.click=false;
+		}
+
+		scope.mouse.lastMouseUp = scope.mouse.up;
+	};
+
 	//Initialization
 	
 	this.init = function(target, create){
 		target = target?target:document.body;
 		if(create){
 			this.canvas = document.createElement("canvas");
+			if(this.settings.fullscreen){
+				this.settings.width = window.innerWidth;
+				this.settings.height = window.innerHeight;
+			}
 			this.canvas.width = this.settings.width;
 			this.canvas.height = this.settings.height;
-			this.context = this.canvas.getContext("2d");
+			target.appendChild(this.canvas);
 		}
 
+		this.context = this.canvas.getContext("2d");
 		window.addEventListener("keydown", onKeyDown, false);
 		window.addEventListener("keyup", onKeyUp, false);
 		if(this.settings.preventKeyDefaults)
@@ -133,7 +156,6 @@ function vn(settings){
 		this.canvas.addEventListener('mousedown', mouseDown, false);
 		this.canvas.addEventListener('mousemove', mouseMove, false);
 		this.canvas.addEventListener('mouseout', mouseOut, false);
-		target.appendChild(this.canvas);
 		this.loadScenes();
 		this.loadAudio();
 		this.loadImages();
@@ -254,7 +276,9 @@ function vn(settings){
 		} else {
 			if(this.isKeyDown("left"))
 				console.log("left");
-			console.log(scope.mouse);
+			clickManager();
+			handleClicks();
+			//console.log(scope.mouse);
 		}
 	};
 
@@ -274,12 +298,73 @@ function vn(settings){
 
 	function drawScene(){
 		for(var i = 0; i<scope.UI.length;i++){
-			scope.UI[i].draw();
+			var obj = scope.UI[i];
+			recursiveDraw(obj, 0, 0);
 		}
 	}
 
+	function recursiveDraw(obj, x, y){
+		var children = obj.getChildren();
+		var collision = obj.isCollision(scope.mouse.x,scope.mouse.y,1,1);
+		//console.log(collision);
+		if(collision && !scope.mouse.up){
+			if(obj.onDown){
+				obj.onDown(x,y);
+			}
+		} else if(collision) {
+			if(obj.onHover){
+				obj.onHover(x,y);
+			}
+		} else {
+			if(obj.draw){
+				obj.draw(x,y);
+			}
+		}
+		if(children.length>0){
+			var childrenHovered = false;
+			for (var i = children.length - 1; i >= 0; i--) {
+				recursiveDraw(children[i], obj.x + x, obj.y + y);
+			}
+		}
+	}
+	var handleClicks = function(){
+		for(var i = 0; i<scope.UI.length;i++){
+			var obj = scope.UI[i];
+			clickRecursive(obj);
+		}
+	};
+
+	var clickRecursive = function(obj){
+		var children = obj.getChildren();
+		if(children.length>0){
+			for (var i = children.length - 1; i >= 0; i--) {
+				if(clickRecursive(children[i]))
+					return false;
+			}
+		}
+		var collision = obj.isCollision(scope.mouse.x,scope.mouse.y,1,1);
+		if(collision && scope.mouse.click){
+			if(obj.onClick){
+				obj.onClick();
+				return true;
+			}
+		} else if (collision && scope.mouse.clickRelease){
+			if(obj.onRelease){
+				obj.onRelease();
+				return true;
+			}
+		} else {
+			return false;
+		}
+	};
+
+
 
 	//Misc
+
+	var rectCollision=function(rect1x, rect1y, rect1w, rect1h, rect2x, rect2y, rect2w, rect2h){
+		return rect1x+rect1w > rect2x && rect1x < (rect2x + rect2w) && rect1y+rect1h > rect2y && rect1y < (rect2y + rect2h);
+	};
 
 	var errorMessage = "vn.js error: ";
 
@@ -318,7 +403,6 @@ function vn(settings){
 			console.log(e);
 			error("It appears you are trying to run this game locally, you must either upload it to a server, or use a local enviroment to run it");
 		}
-		
 	};
 
 	//======= Classes =======\\
@@ -370,7 +454,7 @@ function vn(settings){
 	};
 
 	var objDraw = function(){
-		scope.context.fillRect(this.x, this.y, this.width, this.height);
+		//scope.context.fillRect(this.x, this.y, this.width, this.height);
 	};
 
 	this.object = function(x, y, w, h){
@@ -378,34 +462,99 @@ function vn(settings){
 		this.y = y;
 		this.width = w;
 		this.height = h;
+		this.parent = null;
+		this.hide = false;
+		var children = [];
 
 		this.draw = objDraw;
 
 		this.update = function(){
 
 		};
+
+		this.getGlobalX = function(){
+			return getX(this);
+		};
+
+		this.getX = function(){
+			return this.x;
+		};
+
+		var getX = function(obj){
+			if(obj.parent)
+				return obj.getX() + getX(obj.parent);
+			else
+				return obj.getX();
+		};
+
+		this.getGlobalY = function(){
+			return getY(this);
+		};
+
+		this.getY = function(){
+			return this.y;
+		};
+
+		var getY = function(obj){
+			if(obj.parent)
+				return obj.getY() + getY(obj.parent);
+			else
+				return obj.getY();
+		};
+
+		this.getHeight = function(){
+			return this.height;
+		};
+
+		this.getWidth = function(){
+			return this.width;
+		};
+
+		this.isCollision = function(rect2x, rect2y, rect2w, rect2h){
+			var rect1x = this.getGlobalX(), rect1y = this.getGlobalY(), rect1w = this.getWidth(), rect1h = this.getHeight();
+			return (rect1x+rect1w) > rect2x && rect1x < (rect2x + rect2w) && rect1y+rect1h > rect2y && rect1y < (rect2y + rect2h);
+		};
+
+		this.getChildren = function(){
+			return children;
+		};
+
+		this.addChild = function(obj){
+			obj.parent = this;
+			children.push(obj);
+			return obj;
+		};
 	};
 
-	var buttonDraw = function(){
+	var buttonDraw = function(obj){
 		scope.context.fillStyle = "#084B8A";
-		scope.context.fillRect(this.x,this.y,this.width,this.height);
+		scope.context.fillRect(obj.getGlobalX(),obj.getGlobalY(),obj.getWidth(),obj.getHeight());
 		scope.context.fillStyle = "#2E9AFE";
-		scope.context.fillRect(this.x,this.y,this.width,this.height*0.75);
-		if(this.label){
-			scope.context.font = (this.height/2)*this.fontScale + "px "+scope.settings.font; 
+		scope.context.fillRect(obj.getGlobalX(),obj.getGlobalY(),obj.getWidth(),obj.getHeight()*0.75);
+		if(obj.label){
+			scope.context.font = (obj.getHeight()/2)*obj.fontScale + "px "+scope.settings.font; 
 			scope.context.fillStyle = "white";
-			scope.context.fillText(this.label,this.x+Math.max(this.width/2 - scope.context.measureText(this.label).width/2,0),this.y+(this.height/2)*this.fontScale,this.width);
+			scope.context.fillText(obj.label,obj.getGlobalX()+Math.max(obj.getWidth()/2 - scope.context.measureText(obj.label).width/2,0),obj.getGlobalY()+(obj.getHeight()/2)*obj.fontScale,obj.getWidth());
 		}
 	};
 
-	var buttonOnHover = function(){
+	var buttonOnHover = function(obj){
 		scope.context.fillStyle = "#084B8A";
-		scope.context.fillRect(this.x,this.y,this.width,this.height);
-		if(this.label){
-			scope.context.font = (this.height/2)*this.fontScale + "px "+scope.settings.font; 
+		scope.context.fillRect(obj.getGlobalX(),obj.getGlobalY(),obj.getWidth(),obj.getHeight());
+		if(obj.label){
+			scope.context.font = (obj.getHeight()/2)*obj.fontScale + "px "+scope.settings.font; 
 			scope.context.fillStyle = "white";
-			scope.context.fillText(this.label,this.x+Math.max(this.width/2 - scope.context.measureText(this.label).width/2,0),this.y+(this.height/2)*this.fontScale,this.width);
+			scope.context.fillText(obj.label,obj.getGlobalX()+Math.max(obj.getWidth()/2 - scope.context.measureText(obj.label).width/2,0),obj.getGlobalY()+(obj.getHeight()/2)*obj.fontScale,obj.getWidth());
 		}
+	};
+
+	var drawButton = function(){
+		if(!this.hide)
+			buttonDraw(this);
+	};
+	var drawOnHover = function(){
+		if(!this.hide)
+			buttonOnHover(this);
 	};
 
 	var buttonParameter = {
@@ -425,27 +574,20 @@ function vn(settings){
 		scope.object.call(this, options.x, options.y, options.width, options.height);
 		this.label = options.label;
 		this.fontScale = options.fontScale?options.fontScale:1;
-		this.draw = buttonDraw;
-		this.onHover = buttonOnHover;
-		this.onDown = function(){
-
-		};
+		this.draw = drawButton;
+		this.onHover = drawOnHover;
+		this.onDown = drawOnHover;
 		this.onClick = function(){
-
+			console.log(this);
 		};
-
+		this.onRelease = function(){
+			console.log(this);
+		};
 	};
 
-	var responsiveDraw = function(){
-		scope.context.fillStyle = "#084B8A";
-		scope.context.fillRect(this.getResponsiveX(),this.getResponsiveY(),this.getResponsiveWidth(),this.getResponsiveHeight());
-		scope.context.fillStyle = "#2E9AFE";
-		scope.context.fillRect(this.getResponsiveX(),this.getResponsiveY(),this.getResponsiveWidth(),this.getResponsiveHeight()*0.75);
-		if(this.label){
-			scope.context.font = (this.getResponsiveHeight()/2)*this.fontScale + "px "+scope.settings.font; 
-			scope.context.fillStyle = "white";
-			scope.context.fillText(this.label,this.getResponsiveX()+Math.max(this.getResponsiveWidth()/2 - scope.context.measureText(this.label).width/2,0),this.getResponsiveY()+(this.getResponsiveHeight()/2),this.getResponsiveWidth());
-		}
+	var drawResponsive = function(){
+		if(!this.hide)
+			responsiveDraw(this);
 	};
 
 	var responsiveButtonParameter = {
@@ -473,18 +615,43 @@ function vn(settings){
 		this.xPercent = options.xPercent;
 		this.yPercent = options.yPercent;
 		this.label = options.label;
-		this.draw = responsiveDraw;
-		this.onHover = responsiveDraw;
-		this.getResponsiveWidth = function(){
-			return this.widthPercent?scope.settings.width*this.widthPercent:this.width;
+		this.draw = this.draw;
+		this.onHover = this.onHover;
+		this.getGlobalX = function(){
+			return getX(this);
 		};
-		this.getResponsiveHeight = function(){
-			return this.heightPercent?scope.settings.height*this.heightPercent:this.height;
+		var getX = function(obj){
+			if(obj.parent)
+				return obj.getX() + getX(obj.parent);
+			else
+				return obj.getX();
 		};
-		this.getResponsiveX = function(){
+		this.getGlobalY = function(){
+			return getY(this);
+		};
+		var getY = function(obj){
+			if(obj.parent)
+				return obj.getY() + getY(obj.parent);
+			else
+				return obj.getY();
+		};
+		
+		this.getWidth = function(){
+			var w = scope.settings.width;
+				if(this.parent)
+					w = this.parent.getWidth();
+			return this.widthPercent?w*this.widthPercent:this.width;
+		};
+		this.getHeight = function(){
+			var h = scope.settings.height;
+			if(this.parent)
+					h = this.parent.getHeight();
+			return this.heightPercent?h*this.heightPercent:this.height;
+		};
+		this.getX = function(){
 			return this.xPercent?scope.settings.width*this.xPercent:this.x;
 		};
-		this.getResponsiveY = function(){
+		this.getY = function(){
 			return this.yPercent?scope.settings.height*this.yPercent:this.y;
 		};
 	};
