@@ -4,7 +4,7 @@
 [X] Add better mousehandling for onclicks
 [X] Add button manager
 [X] Add button click manager
-[ ] Add imageButton
+[X] Add imageButton
 [ ] Add textArea
 [ ] ParseSettings
 [ ] Scene Stuff
@@ -373,7 +373,7 @@ function vn(settings){
 	};
 
 	var a = function(arg){
-		return arg === undefined && arg ===null;
+		return arg === undefined || arg ===null;
 	};
 
 
@@ -533,8 +533,8 @@ function vn(settings){
 		scope.context.fillRect(obj.getGlobalX(),obj.getGlobalY(),obj.getWidth(),obj.getHeight()*0.75);
 		if(obj.label){
 			scope.context.font = (obj.getHeight()/2)*obj.fontScale + "px "+scope.settings.font; 
-			scope.context.fillStyle = "white";
-			scope.context.fillText(obj.label,obj.getGlobalX()+Math.max(obj.getWidth()/2 - scope.context.measureText(obj.label).width/2,0),obj.getGlobalY()+(obj.getHeight()/2)*obj.fontScale,obj.getWidth());
+			scope.context.fillStyle = obj.fontColor;
+			scope.context.fillText(obj.label,obj.getGlobalX()+Math.max(obj.getWidth()/2 - scope.context.measureText(obj.label).width/2,0),obj.getGlobalY()+(obj.getHeight()/2)+((obj.getHeight()/2)*obj.fontScale)*0.4+obj.getHeight()*obj.fontYOffsetPercent,obj.getWidth());
 		}
 	};
 
@@ -543,8 +543,8 @@ function vn(settings){
 		scope.context.fillRect(obj.getGlobalX(),obj.getGlobalY(),obj.getWidth(),obj.getHeight());
 		if(obj.label){
 			scope.context.font = (obj.getHeight()/2)*obj.fontScale + "px "+scope.settings.font; 
-			scope.context.fillStyle = "white";
-			scope.context.fillText(obj.label,obj.getGlobalX()+Math.max(obj.getWidth()/2 - scope.context.measureText(obj.label).width/2,0),obj.getGlobalY()+(obj.getHeight()/2)*obj.fontScale,obj.getWidth());
+			scope.context.fillStyle = obj.fontColor;
+			scope.context.fillText(obj.label,obj.getGlobalX()+Math.max(obj.getWidth()/2 - scope.context.measureText(obj.label).width/2,0),obj.getGlobalY()+(obj.getHeight()/2)+((obj.getHeight()/2)*obj.fontScale)*0.4+obj.getHeight()*obj.fontYOffsetPercent,obj.getWidth());
 		}
 	};
 
@@ -557,39 +557,6 @@ function vn(settings){
 			buttonOnHover(this);
 	};
 
-	var buttonParameter = {
-		x:"!Number",
-		y:"!Number",
-		width:"!Number",
-		height:"!Number",
-		fontScale:"Number: Scales the font",
-		label:"Label"
-	};
-
-	this.button = function(options){
-		if(a(options.x) || a(options.y) || a(options.width) || a(options.height)){
-			error("Missing required parameters. Parameter format: "+JSON.stringify(buttonParameter));
-			return false;
-		}
-		scope.object.call(this, options.x, options.y, options.width, options.height);
-		this.label = options.label;
-		this.fontScale = options.fontScale?options.fontScale:1;
-		this.draw = drawButton;
-		this.onHover = drawOnHover;
-		this.onDown = drawOnHover;
-		this.onClick = function(){
-			console.log(this);
-		};
-		this.onRelease = function(){
-			console.log(this);
-		};
-	};
-
-	var drawResponsive = function(){
-		if(!this.hide)
-			responsiveDraw(this);
-	};
-
 	var responsiveButtonParameter = {
 		xPercent:"?!Number: Can be substituted for x",
 		x:"!Number",
@@ -600,23 +567,37 @@ function vn(settings){
 		heightPercent:"?!Number: Can be substituted with height",
 		height:"!Number",
 		fontScale:"Number: Scales the font",
+		fontColor:"Color: Sets the color of text",
+		fontYOffsetPercent:"Number: ",
 		label:"Label"
 	};
 
-	this.responsiveButton = function(options){
-		if((a(options.xPercent) || a(options.x)) || (a(options.yPercent) || a(options.y)) || (a(options.width) || a(options.widthPercent)) || (a(options.height) || a(options.heightPercent))){
-			error("Missing required parameters. Parameter format: "+JSON.stringify(responsiveButtonParameter));
+	this.button = function(options){
+		if((a(options.xPercent) && a(options.x)) || (a(options.yPercent) && a(options.y)) || (a(options.width) && a(options.widthPercent)) || (a(options.height) && a(options.heightPercent))){
+			error("Missing required parameters. Parameter format: ");
+			console.log(responsiveButtonParameter);
 			return false;
 		}
-		var obj = {x:options.x || 0, y:options.y || 0, width:options.width || 0, height:options.height || 0};
-		scope.button.call(this, obj);
+		scope.object.call(this, (options.x || 0), (options.y || 0), (options.width || 0), (options.height || 0));
+		
 		this.widthPercent = options.widthPercent;
 		this.heightPercent = options.heightPercent;
 		this.xPercent = options.xPercent;
 		this.yPercent = options.yPercent;
 		this.label = options.label;
-		this.draw = this.draw;
-		this.onHover = this.onHover;
+		this.fontScale = options.fontScale?options.fontScale:1;
+		this.fontColor = options.fontColor?options.fontColor:"white";
+		this.fontYOffsetPercent = options.fontYOffsetPercent?options.fontYOffsetPercent:-0.15;
+		this.draw = drawButton;
+		this.onHover = drawOnHover;
+		this.onDown = drawOnHover;
+
+		this.onClick = function(){
+			console.log(this);
+		};
+		this.onRelease = function(){
+			console.log(this);
+		};
 		this.getGlobalX = function(){
 			return getX(this);
 		};
@@ -654,6 +635,37 @@ function vn(settings){
 		this.getY = function(){
 			return this.yPercent?scope.settings.height*this.yPercent:this.y;
 		};
+	};
+
+	var imageButtonParameter = {
+		imageUp:"!Image: Normal \"Up\" position of the button. Will be used for others if no hover is provided",
+		imageHover:"Image: Image shown when mouse is hovering. Will replace imageDown",
+		imageDown:"Image shown when mouse is down"
+	};
+
+	var imageButtonDraw = function(obj, image){
+		scope.context.drawImage(image,obj.getGlobalX(),obj.getGlobalY(),obj.getWidth(),obj.getHeight());
+		if(obj.label){
+			scope.context.font = (obj.getHeight()/2)*obj.fontScale + "px "+scope.settings.font; 
+			scope.context.fillStyle = obj.fontColor;
+			scope.context.fillText(obj.label,obj.getGlobalX()+Math.max(obj.getWidth()/2 - scope.context.measureText(obj.label).width/2,0),obj.getGlobalY()+(obj.getHeight()/2)+((obj.getHeight()/2)*obj.fontScale)*0.4+obj.getHeight()*obj.fontYOffsetPercent,obj.getWidth());
+		}
+	};
+
+	this.imageButton = function(options){
+
+		scope.button.call(this,options);
+		if(!options.imageUp){
+			error("Missing required parameters. Parameter format: ");
+			console.log(imageButtonParameter);
+		}
+		this.fontYOffsetPercent = this.fontYOffsetPercent!==-0.15?this.fontYOffsetPercent:0;
+		this.imageUp = options.imageUp;
+		this.imageHover = options.imageHover?options.imageHover:this.imageUp;
+		this.imageDown = options.imageDown?options.imageDown:this.imageHover;
+		this.draw = function(){imageButtonDraw(this, this.imageUp);};
+		this.onHover = function(){imageButtonDraw(this, this.imageHover);};
+		this.onDown = function(){imageButtonDraw(this, this.imageDown);};		
 	};
 
 }
