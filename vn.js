@@ -5,25 +5,31 @@
 [X] Add button manager
 [X] Add button click manager
 [X] Add imageButton
+[X] Improved hover and click areas
 [ ] Add textArea
 [ ] ParseSettings
 [ ] Scene Stuff
 [ ] Import Data
-
-
+[ ] Add deltaTime to loop
 */
 
+
+//Main object
 function vn(settings){
 	//======= Variables =======\\
 	
 
-	//System
+	//System\\
 
+
+	//Local version of scope, used for closures
 	var scope = this;
 	
 
-	//Settings variables
+	//Settings variables\\
 
+
+	//Default settings object, contains all default settings.
 	var defaultSettings = {
 		masterVolume:1,
 		width:500,
@@ -37,34 +43,69 @@ function vn(settings){
 	this.settings=settings?settings:defaultSettings;
 	
 
-	//Asset variables
+	//Asset variables\\
 
+
+	//Path variables. Set these to an array of all of the asset URLs and the
+	//Application will load them when the init method is called
 	this.audioPaths = [];
 	this.imagePaths = [];
 	this.scenePaths = [];
+
+	//Keeps track of how many assets are loaded. Used for loading
 	this.loadedAudio = 0;
 	this.loadedImages = 0;
 	this.loadedScenes = 0;
+
+	//Contains loaded versions of all assets
 	this.audio = [];
 	this.images = [];
 	this.scenes = [];
 
 
-	//Scene
+	//Scene\\
 
+
+	//Keeps track of the scene and frame
 	this.scene = -1;
 	this.frame = 0;
+
+	//Contains all UI elements
 	this.UI = [];
 
-	//IO
+	//IO\\
+
+	//Object of keypresses. 
 	this.keys = {};
+
+	//Contains all user-defined keybindings. Should be set pre-init
 	this.keybindings = [];
-	this.mouse = {x:-1, y:-1, up:true, hover:-1,lastDown:false,click:false,clickRelease:false};
+
+	//Object for mouse handling, 
+	this.mouse = {
+		//X an Y positions of mouse relative to canvas
+		x:-1, 
+		y:-1, 
+		//If the mouse is currently being pressed
+		up:true, 
+		//UI element mouse is hovering over
+		hover:null,
+		//UI element that is currently down
+		down:null,
+		//lastPosition of the mouse.
+		lastDown:false,
+		//becomes true for one frame if mouse has been clicked
+		click:false,
+		//becomes true for one frame after mouse has been released
+		clickRelease:false
+	};
 
 
 	//======= Methods ========\\
 
-	//IO
+	//IO\\
+
+
 	var onKeyDown = function(e){
 		scope.keys[e.keyCode] = true;
 		scope.lastkey=e.keyCode;
@@ -74,6 +115,7 @@ function vn(settings){
 		delete scope.keys[e.keyCode];
 	};
 
+	//Prevents default key actions of keybindings
 	var prevent=function(e){
 		var keys=[];
 		for(var i=0;i<scope.keybindings.length;i++){
@@ -85,6 +127,41 @@ function vn(settings){
 		}
 	};
 
+	this.findKey=function(label){
+		for(var i=0;i<this.keybindings.length;i++){
+			if(this.keybindings[i].label==label)
+				return i;
+		}
+		return -1;
+	};
+
+	this.isKeyDown = function(label){
+		if(this.findKey(label)<0)
+			return false;
+		var keybinding = this.keybindings[this.findKey(label)];
+		if(keybinding.primary in this.keys || keybinding.secondary in this.keys)
+			return true;
+	};
+	
+	this.rebind=function(label,primary,secondary){
+		var k=this.findKey(label);
+		if(k>=0){
+			if(!primary)
+				primary=this.keybindings[k].primary;
+			if(!secondary)
+				secondary=this.keybindings[k].secondary;
+			for(var i=0;i<this.keybindings.length;i++){
+				if(i!=k && this.keybindings[i].primary==primary)
+					this.keybindings[i].primary=this.keybindings[k].primary;
+				if(i!=k && this.keybindings[i].secondary==secondary)
+					this.keybindings[i].secondary=this.keybindings[k].secondary;
+			}
+			this.keybindings[k].primary=primary;
+			this.keybindings[k].secondary=secondary;
+		} 
+	};
+
+	//Resize window
 	var resize = function(){
 		visualNovel.settings.width = window.innerWidth;
 		visualNovel.settings.height = window.innerHeight;
@@ -115,6 +192,7 @@ function vn(settings){
 		}
 	};
 
+	//Makes it so mouse.click and mouse.clickRelease work
 	var clickManager = function(){
 		if(!scope.mouse.lastMouseUp  && scope.mouse.up){
 			scope.mouse.clickRelease=true;
@@ -130,8 +208,11 @@ function vn(settings){
 		scope.mouse.lastMouseUp = scope.mouse.up;
 	};
 
-	//Initialization
+	//Initialization\\
 	
+
+	//Initialization function, loads assets, sets IO events, and
+	//creates the canvas if it hasn't already been created
 	this.init = function(target, create){
 		target = target?target:document.body;
 		if(create){
@@ -167,10 +248,8 @@ function vn(settings){
 	};
 
 
-	//Assets
-	this.setAudioPaths = function(paths){
-		this.audioPaths = paths;
-	};
+	//Assets\\
+
 
 	var audioLoad = function(e){
 		scope.loadedAudio++;
@@ -219,46 +298,9 @@ function vn(settings){
 			sendHTTP("get",this.scenePaths[i],{},addScene);
 		}
 	};
-
 	
-	//IO
 
-	this.findKey=function(label){
-		for(var i=0;i<this.keybindings.length;i++){
-			if(this.keybindings[i].label==label)
-				return i;
-		}
-		return -1;
-	};
-
-	this.isKeyDown = function(label){
-		if(this.findKey(label)<0)
-			return false;
-		var keybinding = this.keybindings[this.findKey(label)];
-		if(keybinding.primary in this.keys || keybinding.secondary in this.keys)
-			return true;
-	};
-	
-	this.rebind=function(label,primary,secondary){
-		var k=this.findKey(label);
-		if(k>=0){
-			if(!primary)
-				primary=this.keybindings[k].primary;
-			if(!secondary)
-				secondary=this.keybindings[k].secondary;
-			for(var i=0;i<this.keybindings.length;i++){
-				if(i!=k && this.keybindings[i].primary==primary)
-					this.keybindings[i].primary=this.keybindings[k].primary;
-				if(i!=k && this.keybindings[i].secondary==secondary)
-					this.keybindings[i].secondary=this.keybindings[k].secondary;
-			}
-			this.keybindings[k].primary=primary;
-			this.keybindings[k].secondary=secondary;
-		} 
-	};
-
-
-	//Display loop
+	//Display loop\\
 
 	var disp = function(){
 		if(scope.update)
@@ -278,7 +320,9 @@ function vn(settings){
 				console.log("left");
 			clickManager();
 			handleClicks();
-			//console.log(scope.mouse);
+			//console.log(scope.mouse.hover);
+			console.log(scope.mouse.down);
+				
 		}
 	};
 
@@ -303,39 +347,52 @@ function vn(settings){
 		}
 	}
 
-	function recursiveDraw(obj, x, y){
+	function recursiveDraw(obj){
 		var children = obj.getChildren();
 		var collision = obj.isCollision(scope.mouse.x,scope.mouse.y,1,1);
-		//console.log(collision);
-		if(collision && !scope.mouse.up){
+		if(obj.hide)
+			return false;
+		if(scope.mouse.down == obj){
 			if(obj.onDown){
-				obj.onDown(x,y);
+				obj.onDown();
+			} else if(obj.onHover){
+				obj.onHover();
+			} else if(obj.draw){
+				obj.draw();
 			}
-		} else if(collision) {
+		} else if(scope.mouse.hover == obj){
 			if(obj.onHover){
-				obj.onHover(x,y);
+				obj.onHover();
+			} else if(obj.draw){
+				obj.draw();
 			}
 		} else {
 			if(obj.draw){
-				obj.draw(x,y);
+				obj.draw();
 			}
 		}
 		if(children.length>0){
 			var childrenHovered = false;
-			for (var i = children.length - 1; i >= 0; i--) {
-				recursiveDraw(children[i], obj.x + x, obj.y + y);
+			for (var i = 0, len = children.length; i < len; i++) {
+				recursiveDraw(children[i]);
 			}
 		}
 	}
+
 	var handleClicks = function(){
-		for(var i = 0; i<scope.UI.length;i++){
+		scope.mouse.hover = null;
+		scope.mouse.down = null;
+		for (var i = scope.UI.length - 1; i >= 0; i--) {
 			var obj = scope.UI[i];
-			clickRecursive(obj);
+			if(clickRecursive(obj))
+				return true;
 		}
 	};
 
 	var clickRecursive = function(obj){
 		var children = obj.getChildren();
+		if(obj.hide)
+			return false;
 		if(children.length>0){
 			for (var i = children.length - 1; i >= 0; i--) {
 				if(clickRecursive(children[i]))
@@ -343,16 +400,28 @@ function vn(settings){
 			}
 		}
 		var collision = obj.isCollision(scope.mouse.x,scope.mouse.y,1,1);
-		if(collision && scope.mouse.click){
+		if (collision && !scope.mouse.up){
+			if(!scope.mouse.down){
+				scope.mouse.down = obj;
+				scope.mouse.hover = null;
+			}
+		}else if(collision && scope.mouse.click){
 			if(obj.onClick){
 				obj.onClick();
+				
 				return true;
 			}
 		} else if (collision && scope.mouse.clickRelease){
 			if(obj.onRelease){
 				obj.onRelease();
+				scope.mouse.down = obj;
+				scope.mouse.hover = null;
 				return true;
 			}
+		} else if(collision){
+			if(!scope.mouse.hover && !scope.mouse.down)
+				scope.mouse.hover = obj;
+			return false;
 		} else {
 			return false;
 		}
@@ -549,11 +618,9 @@ function vn(settings){
 	};
 
 	var drawButton = function(){
-		if(!this.hide)
 			buttonDraw(this);
 	};
 	var drawOnHover = function(){
-		if(!this.hide)
 			buttonOnHover(this);
 	};
 
@@ -572,32 +639,18 @@ function vn(settings){
 		label:"Label"
 	};
 
-	this.button = function(options){
+	this.responsiveObject = function(options){
 		if((a(options.xPercent) && a(options.x)) || (a(options.yPercent) && a(options.y)) || (a(options.width) && a(options.widthPercent)) || (a(options.height) && a(options.heightPercent))){
 			error("Missing required parameters. Parameter format: ");
 			console.log(responsiveButtonParameter);
 			return false;
 		}
 		scope.object.call(this, (options.x || 0), (options.y || 0), (options.width || 0), (options.height || 0));
-		
 		this.widthPercent = options.widthPercent;
 		this.heightPercent = options.heightPercent;
 		this.xPercent = options.xPercent;
 		this.yPercent = options.yPercent;
-		this.label = options.label;
-		this.fontScale = options.fontScale?options.fontScale:1;
-		this.fontColor = options.fontColor?options.fontColor:"white";
-		this.fontYOffsetPercent = options.fontYOffsetPercent?options.fontYOffsetPercent:-0.15;
-		this.draw = drawButton;
-		this.onHover = drawOnHover;
-		this.onDown = drawOnHover;
 
-		this.onClick = function(){
-			console.log(this);
-		};
-		this.onRelease = function(){
-			console.log(this);
-		};
 		this.getGlobalX = function(){
 			return getX(this);
 		};
@@ -630,11 +683,36 @@ function vn(settings){
 			return this.heightPercent?h*this.heightPercent:this.height;
 		};
 		this.getX = function(){
-			return this.xPercent?scope.settings.width*this.xPercent:this.x;
+			var x = scope.settings.width;
+			if(this.parent)
+				x = this.parent.getWidth();
+			return this.xPercent?x*this.xPercent:this.x;
 		};
 		this.getY = function(){
-			return this.yPercent?scope.settings.height*this.yPercent:this.y;
+			var y = scope.settings.height;
+			if(this.parent)
+				y = this.parent.getHeight();
+			return this.yPercent?y*this.yPercent:this.y;
 		};
+	};
+
+	this.button = function(options){
+		scope.responsiveObject.call(this, options);
+		this.label = options.label;
+		this.fontScale = options.fontScale?options.fontScale:1;
+		this.fontColor = options.fontColor?options.fontColor:"white";
+		this.fontYOffsetPercent = options.fontYOffsetPercent?options.fontYOffsetPercent:-0.15;
+		this.draw = drawButton;
+		this.onHover = drawOnHover;
+		this.onDown = drawOnHover;
+
+		this.onClick = function(){
+			console.log(this);
+		};
+		this.onRelease = function(){
+			console.log(this);
+		};
+		
 	};
 
 	var imageButtonParameter = {
@@ -666,6 +744,25 @@ function vn(settings){
 		this.draw = function(){imageButtonDraw(this, this.imageUp);};
 		this.onHover = function(){imageButtonDraw(this, this.imageHover);};
 		this.onDown = function(){imageButtonDraw(this, this.imageDown);};		
+	};
+
+	var textDraw = function(){
+		if(this.backgroundColor){
+			scope.context.fillStyle = this.backgroundColor;
+			scope.context.fillRect(this.getGlobalX(),this.getGlobalY(),this.getWidth(),this.getHeight());
+		}
+		scope.context.fillStyle = "";
+	};
+
+	this.textArea = function(options){
+		scope.responsiveObject.call(this, options);
+		this.fontSize = options.fontSize?options.fontSize:scope.settings.fontSize;
+		this.fontColor = options.fontColor?options.fontColor:"white";
+		this.text = options.text;
+		this.backgroundColor = options.backgroundColor;
+		this.draw = textDraw;
+		this.onClick = function(){};
+		this.onRelease = function(){};
 	};
 
 }
