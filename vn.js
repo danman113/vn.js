@@ -6,13 +6,14 @@
 [X] Add button click manager
 [X] Add imageButton
 [X] Improved hover and click areas
-[ ] Add textArea
-[ ] ParseSettings
+[X] Made responsive object it's own class
+[X] Add textArea
+[X] Add typewriter
+[X] ParseSettings
 [ ] Scene Stuff
 [ ] Import Data
 [ ] Add deltaTime to loop
 */
-
 
 //Main object
 function vn(settings){
@@ -30,18 +31,8 @@ function vn(settings){
 
 
 	//Default settings object, contains all default settings.
-	var defaultSettings = {
-		masterVolume:1,
-		width:500,
-		height:500,
-		font:"arial",
-		fontSize:13,
-		fullscreen:true,
-		preventKeyDefaults:true
-	};
 
-	this.settings=settings?settings:defaultSettings;
-	
+	parseOptions(settings);	
 
 	//Asset variables\\
 
@@ -243,8 +234,19 @@ function vn(settings){
 		requestAnimationFrame(disp);
 	};
 
-	var parseOptions = function(){
-
+	function parseOptions (options){
+		var defaultSettings = {
+			masterVolume:1,
+			width:500,
+			height:500,
+			font:"arial",
+			fontSize:13,
+			fullscreen:true,
+			preventKeyDefaults:true
+		};
+		scope.settings = defaultSettings;
+		for(var option in options)
+			scope.settings[option] = options[option];
 	};
 
 
@@ -320,8 +322,6 @@ function vn(settings){
 				console.log("left");
 			clickManager();
 			handleClicks();
-			//console.log(scope.mouse.hover);
-			console.log(scope.mouse.down);
 				
 		}
 	};
@@ -405,6 +405,12 @@ function vn(settings){
 				scope.mouse.down = obj;
 				scope.mouse.hover = null;
 			}
+			if(collision && scope.mouse.click){
+				if(obj.onClick){
+					obj.onClick();		
+					return true;
+				}
+			} 
 		}else if(collision && scope.mouse.click){
 			if(obj.onClick){
 				obj.onClick();
@@ -601,7 +607,7 @@ function vn(settings){
 		scope.context.fillStyle = "#2E9AFE";
 		scope.context.fillRect(obj.getGlobalX(),obj.getGlobalY(),obj.getWidth(),obj.getHeight()*0.75);
 		if(obj.label){
-			scope.context.font = (obj.getHeight()/2)*obj.fontScale + "px "+scope.settings.font; 
+			scope.context.font = (obj.getHeight()/2)*obj.fontScale + "px "+obj.font; 
 			scope.context.fillStyle = obj.fontColor;
 			scope.context.fillText(obj.label,obj.getGlobalX()+Math.max(obj.getWidth()/2 - scope.context.measureText(obj.label).width/2,0),obj.getGlobalY()+(obj.getHeight()/2)+((obj.getHeight()/2)*obj.fontScale)*0.4+obj.getHeight()*obj.fontYOffsetPercent,obj.getWidth());
 		}
@@ -611,17 +617,17 @@ function vn(settings){
 		scope.context.fillStyle = "#084B8A";
 		scope.context.fillRect(obj.getGlobalX(),obj.getGlobalY(),obj.getWidth(),obj.getHeight());
 		if(obj.label){
-			scope.context.font = (obj.getHeight()/2)*obj.fontScale + "px "+scope.settings.font; 
+			scope.context.font = (obj.getHeight()/2)*obj.fontScale + "px "+obj.font; 
 			scope.context.fillStyle = obj.fontColor;
 			scope.context.fillText(obj.label,obj.getGlobalX()+Math.max(obj.getWidth()/2 - scope.context.measureText(obj.label).width/2,0),obj.getGlobalY()+(obj.getHeight()/2)+((obj.getHeight()/2)*obj.fontScale)*0.4+obj.getHeight()*obj.fontYOffsetPercent,obj.getWidth());
 		}
 	};
 
 	var drawButton = function(){
-			buttonDraw(this);
+		buttonDraw(this);
 	};
 	var drawOnHover = function(){
-			buttonOnHover(this);
+		buttonOnHover(this);
 	};
 
 	var responsiveButtonParameter = {
@@ -701,11 +707,11 @@ function vn(settings){
 		this.label = options.label;
 		this.fontScale = options.fontScale?options.fontScale:1;
 		this.fontColor = options.fontColor?options.fontColor:"white";
+		this.font = options.font?options.font:scope.settings.font;
 		this.fontYOffsetPercent = options.fontYOffsetPercent?options.fontYOffsetPercent:-0.15;
 		this.draw = drawButton;
 		this.onHover = drawOnHover;
 		this.onDown = drawOnHover;
-
 		this.onClick = function(){
 			console.log(this);
 		};
@@ -724,14 +730,13 @@ function vn(settings){
 	var imageButtonDraw = function(obj, image){
 		scope.context.drawImage(image,obj.getGlobalX(),obj.getGlobalY(),obj.getWidth(),obj.getHeight());
 		if(obj.label){
-			scope.context.font = (obj.getHeight()/2)*obj.fontScale + "px "+scope.settings.font; 
+			scope.context.font = (obj.getHeight()/2)*obj.fontScale + "px "+obj.font; 
 			scope.context.fillStyle = obj.fontColor;
 			scope.context.fillText(obj.label,obj.getGlobalX()+Math.max(obj.getWidth()/2 - scope.context.measureText(obj.label).width/2,0),obj.getGlobalY()+(obj.getHeight()/2)+((obj.getHeight()/2)*obj.fontScale)*0.4+obj.getHeight()*obj.fontYOffsetPercent,obj.getWidth());
 		}
 	};
 
 	this.imageButton = function(options){
-
 		scope.button.call(this,options);
 		if(!options.imageUp){
 			error("Missing required parameters. Parameter format: ");
@@ -746,25 +751,168 @@ function vn(settings){
 		this.onDown = function(){imageButtonDraw(this, this.imageDown);};		
 	};
 
-	var textDraw = function(){
+	var colorDraw = function(){
 		if(this.backgroundColor){
 			scope.context.fillStyle = this.backgroundColor;
 			scope.context.fillRect(this.getGlobalX(),this.getGlobalY(),this.getWidth(),this.getHeight());
 		}
-		scope.context.fillStyle = "";
 	};
 
-	this.textArea = function(options){
+	this.colorSquare = function(options){
 		scope.responsiveObject.call(this, options);
-		this.fontSize = options.fontSize?options.fontSize:scope.settings.fontSize;
-		this.fontColor = options.fontColor?options.fontColor:"white";
-		this.text = options.text;
 		this.backgroundColor = options.backgroundColor;
-		this.draw = textDraw;
+		this.draw = colorDraw;
 		this.onClick = function(){};
 		this.onRelease = function(){};
 	};
 
+	this.textArea = function(options){
+		scope.responsiveObject.call(this, options);
+		if(!options.text)
+			error("Missing required parameters. Missing parameter: \"text\"");
+		this.fontSize = options.fontSize?options.fontSize:scope.settings.fontSize;
+		this.fontColor = options.fontColor?options.fontColor:"white";
+		this.font = options.font?options.font:scope.settings.font;
+		this.text = options.text;
+		this.lineHeight = options.lineHeight?options.lineHeight:0;
+		this.showSize = false;
+		var textMatrix = [];
+		var lastHeight = this.getHeight();
+		var lastWidth = this.getWidth();
+		var textDraw = function(){
+			if(textMatrix.length<=0 || (lastHeight!=this.getHeight() || lastWidth!=this.getWidth()))
+				this.format();
+			if(this.showSize){
+				scope.context.fillStyle = "rgba(0,0,0,0.5)";
+				scope.context.fillRect(this.getGlobalX(),this.getGlobalY(),this.getWidth(),this.getHeight());
+			}
+			for(var i = 0;i<textMatrix.length;i++){
+				if(!(this.getGlobalY()+(this.fontSize+this.lineHeight)*(i+1)>=this.getHeight()+this.getGlobalY())){
+					scope.context.font = this.fontSize+"px "+this.font;
+					scope.context.fillStyle = this.fontColor;
+					scope.context.fillText(textMatrix[i],this.getGlobalX(),this.getGlobalY()+(this.fontSize+this.lineHeight)*(i+1));	
+				}
+			}
+		};
+		var formatText = function(obj){
+			lastHeight = obj.getHeight();
+			lastWidth = obj.getWidth();
+			var text = obj.text;
+			var lastSpace= 0;
+			textMatrix = [];
+			scope.context.font = obj.fontSize+"px "+obj.font;
+			for(var i = 0,count = text.length;i<count;i++){
+				if(text[i]==" ")
+					lastSpace = i;
+				if(scope.context.measureText(text.substr(0,i)).width>=obj.getWidth()-10){
+					textMatrix.push(text.substr(0,lastSpace));
+					text = text.substr(lastSpace+1,text.length);
+					i = 0;
+				}
+			}
+			textMatrix.push(text);
+		};
+
+		this.draw = textDraw;
+
+		this.format = function(){
+			formatText(this);
+		};
+	};
+
+	this.typewriter = function(options){
+		scope.responsiveObject.call(this, options);
+		if(!options.text)
+			error("Missing required parameters. Missing parameter: \"text\"");
+		this.fontSize = options.fontSize?options.fontSize:scope.settings.fontSize;
+		this.fontColor = options.fontColor?options.fontColor:"white";
+		this.font = options.font?options.font:scope.settings.font;
+		this.text = options.text;
+		this.lineHeight = options.lineHeight?options.lineHeight:0;
+		this.showSize = false;
+		this.lastTyped = Date.now();
+		this.finished = false;
+		var textMatrix = [];
+		var lastHeight = this.getHeight();
+		var lastWidth = this.getWidth();
+		var text = this.text;
+		var lastSpace= 0;
+		var index = 0;
+		var matrixIndex = 0;
+		var typed = 0;
+		this.speed = options.speed?options.speed:50;
+
+		this.onClick = function(){console.log(this.finished);this.skip();};
+		var type = function(obj){
+			lastHeight = obj.getHeight();
+			lastWidth = obj.getWidth();
+			if(textMatrix.length<=0)
+				textMatrix.push("");
+			index++;
+			typed++;
+			scope.context.font = obj.fontSize+"px "+obj.font;
+			if(text[index-1]==" ")
+				lastSpace = index-1;
+			if(scope.context.measureText(text.substr(0,index)).width>=obj.getWidth()-10){
+				textMatrix[matrixIndex] = textMatrix[matrixIndex].substr(0, lastSpace);
+				textMatrix.push(text.substr(0,lastSpace));
+				matrixIndex++;
+				text = text.substr(lastSpace+1,text.length);
+				index = 0;
+			}
+			textMatrix[matrixIndex]= text.substr(0,index);
+			if(!text[index]){
+				obj.finished = true;
+				return;
+			}
+		};
+
+		this.skip = function(){
+			rebuild(this, this.text.length*2);
+			this.finished = true;
+		};
+
+		var rebuild = function(obj,x){
+			if(x===0) return;
+			textMatrix = [];
+			text = obj.text;
+			lastSpace= 0;
+			index = 0;
+			matrixIndex = 0;
+			typed = 0;
+			scope.context.font = obj.fontSize+"px "+obj.font;
+			for(var i = 0,count = x;i<count;i++){
+				type(obj);	
+			}
+		};
+
+		this.type = function(){
+			var value = Math.floor((Date.now()-this.lastTyped)/this.speed);
+			if(value>0){
+				for(var i = 0; i<value;i++)
+					type(this);
+				this.lastTyped = Date.now();
+			}
+		};
+
+		this.draw = function(){
+			if((lastHeight!=this.getHeight() || lastWidth!=this.getWidth()))
+				rebuild(this, typed);
+			this.type();
+			if(this.showSize){
+				scope.context.fillStyle = "rgba(0,0,0,0.5)";
+				scope.context.fillRect(this.getGlobalX(),this.getGlobalY(),this.getWidth(),this.getHeight());
+			}
+			for(var i = 0;i<textMatrix.length;i++){
+				if(!(this.getGlobalY()+(this.fontSize+this.lineHeight)*(i+1)>=this.getHeight()+this.getGlobalY())){
+					scope.context.font = this.fontSize+"px "+this.font;
+					scope.context.fillStyle = this.fontColor;
+					scope.context.fillText(textMatrix[i],this.getGlobalX(),this.getGlobalY()+(this.fontSize+this.lineHeight)*(i+1));	
+				}
+			}
+		};
+
+	};
 }
 
 
