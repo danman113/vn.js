@@ -12,7 +12,7 @@
 		},
 		{
 			"objects":[
-						{"type":"typewriter","onRelease":"if(this.finished){scope.scenes[scope.currentScene].next();} else{this.skip();}","fontColor":"Black","xPercent":0.1,"y":50,"widthPercent":0.8,"height":500,"fontSize":15,"text":"This is nice. Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quasi fugiat quod voluptatem, ullam, modi facilis nesciunt impedit quaerat minus sapiente aspernatur voluptatibus accusantium ipsa voluptate temporibus nihil eligendi nisi eaque."}
+						{"type":"typewriter","onRelease":"if(this.finished){scope.scenes[scope.currentScene].next();} else{this.skip();}","fontColor":"Black","xPercent":0.1,"y":50,"widthPercent":0.8,"height":500,"fontSize":15,"text":"I was bored one morning, so I decided it would be a good idea to go to a creepy abandoned carnival with my sister. When I got there, we rode around in some bumper cars for a while, then a zombie clown approached me. Shit-fuck."}
 									
 					],
 			"connections":["next"]

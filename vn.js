@@ -13,6 +13,7 @@
 [X] Scene Stuff
 [X] Import Data
 [ ] Add deltaTime to loop
+[ ] Add touchscreen controls
 */
 
 //Main object
@@ -262,10 +263,12 @@ function vn(settings){
 			this.audio.push(new this.audioFile(this.audioPaths[i]));
 			this.audio[i].element=document.createElement('audio');
 			this.audio[i].element.src=this.audio[i].src;
-			this.audio[i].element.volume=this.settings.masterVolume;
-			this.audio[i].element.oncanplaythrough=audioLoad;
+			//this.audio[i].element.addEventListener("canplaythrough",audioLoad); 
 			if(this.audio[i].element.load)
 				this.audio[i].element.load();
+			this.audio[i].element.volume=this.settings.masterVolume;
+			
+			this.audio[i].element.oncanplay=audioLoad;
 			this.audio[i].element.play();
 			this.audio[i].element.pause();
 		}
@@ -320,6 +323,7 @@ function vn(settings){
 				this.scenes[this.currentScene].currentFrame.loadFrame();
 			}
 		} else {
+			this.audio[0].play(1);
 			if(this.isKeyDown("left"))
 				console.log("left");
 			clickManager();
@@ -513,7 +517,7 @@ function vn(settings){
 					this.element.play();
 				else{
 					if(!this.child){
-						this.child=new audioFile(this.src);
+						this.child=new scope.audioFile(this.src);
 						this.child.element=document.createElement('audio');
 						this.child.element.src=this.child.src;
 						this.child.element.volume=this.element.volume;
