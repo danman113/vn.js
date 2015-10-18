@@ -10,8 +10,8 @@
 [X] Add textArea
 [X] Add typewriter
 [X] ParseSettings
-[ ] Scene Stuff
-[ ] Import Data
+[X] Scene Stuff
+[X] Import Data
 [ ] Add deltaTime to loop
 */
 
@@ -51,6 +51,7 @@ function vn(settings){
 	//Contains loaded versions of all assets
 	this.audio = [];
 	this.images = [];
+	this.sceneData = [];
 	this.scenes = [];
 
 
@@ -58,8 +59,7 @@ function vn(settings){
 
 
 	//Keeps track of the scene and frame
-	this.scene = -1;
-	this.frame = 0;
+	this.currentScene = -1;
 
 	//Contains all UI elements
 	this.UI = [];
@@ -247,7 +247,7 @@ function vn(settings){
 		scope.settings = defaultSettings;
 		for(var option in options)
 			scope.settings[option] = options[option];
-	};
+	}
 
 
 	//Assets\\
@@ -287,12 +287,13 @@ function vn(settings){
 	var addScene = function(data){
 		try{
 			var scene = JSON.parse(data);
-			scope.scenes.push(scene);
+			scope.sceneData.push(scene);
+			scope.scenes.push(new scope.scene(scene));
 			scope.loadedScenes++;			
 		} catch (e){
-			error("Scene Path not found!");
+			error("Scene could not be read!");
+			console.error(e);
 		}
-
 	};
 
 	this.loadScenes = function(){
@@ -313,9 +314,10 @@ function vn(settings){
 	};
 	
 	this.update = function(){
-		if(this.scene<0){
+		if(this.currentScene<0){
 			if(this.loadedImages >= this.imagePaths.length && this.loadedAudio >= this.audioPaths.length && this.loadedScenes >= this.scenePaths.length){
-				this.scene++;
+				this.currentScene++;
+				this.scenes[this.currentScene].currentFrame.loadFrame();
 			}
 		} else {
 			if(this.isKeyDown("left"))
@@ -328,7 +330,7 @@ function vn(settings){
 
 	this.draw = function(){
 		this.context.clearRect(0,0,this.settings.width,this.settings.height);
-		if(this.scene<0){
+		if(this.currentScene<0){
 			var loaded = (this.loadedScenes+this.loadedImages+this.loadedAudio);
 			var total = (this.audioPaths.length+this.imagePaths.length+this.scenePaths.length);
 			this.context.fillStyle="grey";
@@ -407,19 +409,19 @@ function vn(settings){
 			}
 			if(collision && scope.mouse.click){
 				if(obj.onClick){
-					obj.onClick();		
+					obj.onClick(scope);		
 					return true;
 				}
 			} 
 		}else if(collision && scope.mouse.click){
 			if(obj.onClick){
-				obj.onClick();
+				obj.onClick(scope);
 				
 				return true;
 			}
 		} else if (collision && scope.mouse.clickRelease){
 			if(obj.onRelease){
-				obj.onRelease();
+				obj.onRelease(scope);
 				scope.mouse.down = obj;
 				scope.mouse.hover = null;
 				return true;
@@ -449,6 +451,18 @@ function vn(settings){
 
 	var a = function(arg){
 		return arg === undefined || arg ===null;
+	};
+
+	var optionalFunction = function(obj, property,func,args){
+		if(typeof obj[property] == "function"){
+
+		} else if (typeof property == "string"){
+			console.log(scope);
+			obj[property] = new Function("scope",obj[property]);
+		} else {
+			obj[property] = func;
+		}
+
 	};
 
 
@@ -652,6 +666,12 @@ function vn(settings){
 			return false;
 		}
 		scope.object.call(this, (options.x || 0), (options.y || 0), (options.width || 0), (options.height || 0));
+		var init = function(obj){
+			for(var option in options){
+				obj[option] = options[option];
+			}
+		};
+		init(this);
 		this.widthPercent = options.widthPercent;
 		this.heightPercent = options.heightPercent;
 		this.xPercent = options.xPercent;
@@ -700,6 +720,7 @@ function vn(settings){
 				y = this.parent.getHeight();
 			return this.yPercent?y*this.yPercent:this.y;
 		};
+
 	};
 
 	this.button = function(options){
@@ -712,13 +733,13 @@ function vn(settings){
 		this.draw = drawButton;
 		this.onHover = drawOnHover;
 		this.onDown = drawOnHover;
-		this.onClick = function(){
+		optionalFunction(this,"onClick",function(){
 			console.log(this);
-		};
-		this.onRelease = function(){
+		});
+
+		optionalFunction(this,"onRelease",function(){
 			console.log(this);
-		};
-		
+		});
 	};
 
 	var imageButtonParameter = {
@@ -829,8 +850,8 @@ function vn(settings){
 		this.font = options.font?options.font:scope.settings.font;
 		this.text = options.text;
 		this.lineHeight = options.lineHeight?options.lineHeight:0;
-		this.showSize = false;
-		this.lastTyped = Date.now();
+		this.showSize = options.showSize?true:false;
+		this.lastTyped = -1;
 		this.finished = false;
 		var textMatrix = [];
 		var lastHeight = this.getHeight();
@@ -841,8 +862,8 @@ function vn(settings){
 		var matrixIndex = 0;
 		var typed = 0;
 		this.speed = options.speed?options.speed:50;
-
-		this.onClick = function(){console.log(this.finished);this.skip();};
+		optionalFunction(this,"onRelease",function(){console.log(this.finished);this.skip();});
+		this.onClick = function(){};
 		var type = function(obj){
 			lastHeight = obj.getHeight();
 			lastWidth = obj.getWidth();
@@ -872,6 +893,17 @@ function vn(settings){
 			this.finished = true;
 		};
 
+		this.reset = function(){
+			textMatrix = [];
+			text = this.text;
+			lastSpace= 0;
+			index = 0;
+			matrixIndex = 0;
+			typed = 0;
+			this.finished = false;
+			this.lastTyped = -1;
+		};
+
 		var rebuild = function(obj,x){
 			if(x===0) return;
 			textMatrix = [];
@@ -887,6 +919,8 @@ function vn(settings){
 		};
 
 		this.type = function(){
+			if(this.lastTyped<0)
+				this.lastTyped = Date.now();
 			var value = Math.floor((Date.now()-this.lastTyped)/this.speed);
 			if(value>0){
 				for(var i = 0; i<value;i++)
@@ -911,7 +945,85 @@ function vn(settings){
 				}
 			}
 		};
+	};
 
+	this.scene = function(options){
+		var init = function(obj){
+			//Add frames to scene
+			for(var i = 0; i<options.frames.length;i++){
+				var frame = new scope.frame(options.frames[i]);
+				obj.search[frame.label] = frame;
+				obj.frames.push(frame);
+				if(i == 0)
+					obj.currentFrame = frame;
+			}
+			//adds connections
+			for(var i = 0; i<options.frames.length;i++){
+				obj.frames[i].connections=[];
+				var connections = options.frames[i].connections;
+				for(var x = 0, count = connections.length; x < count;x++){
+					if(connections[x]){
+						if(connections[x] == "next"){
+							if(i+1<obj.frames.length){
+								obj.frames[i].connections.push(obj.frames[i+1]);
+							}
+						} else {
+							if(obj.search[connections[x]]){
+								obj.frames[i].connections.push(obj.search[connections[x]]);
+							}
+						}
+					}
+				}
+
+			}
+		};
+		this.label = options.label?options.label:"Frame "+Date.now();
+		this.search = {};
+		this.frames = [];
+		this.lastFrame = null;
+		this.currentFrame = null;
+		init(this);
+		this.next = function(){
+			if(!this.currentFrame)
+				return false;
+			if(this.currentFrame.connections.length>0){
+				for (var i = this.currentFrame.objects.length - 1; i >= 0; i--) {
+					if(this.currentFrame.objects[i].reset)
+						this.currentFrame.objects[i].reset();
+				};
+				this.currentFrame.connections[0].loadFrame();
+				this.lastFrame = this.currentFrame;
+				this.currentFrame = this.currentFrame.connections[0];
+			}
+		};
+	};
+
+	this.frame = function(options){
+		var init = function(obj){
+			for(var i = 0; i<options.objects.length;i++){
+				switch(options.objects[i].type){
+					case "button":
+						obj.objects.push(new scope.button(options.objects[i]));
+					break;
+					case "imageButton":
+						obj.objects.push(new scope.imageButton(options.objects[i]));
+					break;
+					case "textArea":
+						obj.objects.push(new scope.textArea(options.objects[i]));
+					break;
+					case "typewriter":
+						obj.objects.push(new scope.typewriter(options.objects[i]));
+					break;
+				}
+			}
+		};
+		this.label = options.label?options.label:"Frame "+Date.now()+Math.floor(Math.random()*0xFFFFF);
+		this.objects = [];
+		this.connections = [];
+		init(this);
+		this.loadFrame = function(){
+			scope.UI = this.objects;
+		};
 	};
 }
 
