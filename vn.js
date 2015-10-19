@@ -263,6 +263,9 @@ function vn(settings){
 			this.audio.push(new this.audioFile(this.audioPaths[i]));
 			this.audio[i].element=document.createElement('audio');
 			this.audio[i].element.src=this.audio[i].src;
+			this.audio[i].element.onerror = function(e){
+				alert(e);
+			};
 			//this.audio[i].element.addEventListener("canplaythrough",audioLoad); 
 			if(this.audio[i].element.load)
 				this.audio[i].element.load();
@@ -323,7 +326,6 @@ function vn(settings){
 				this.scenes[this.currentScene].currentFrame.loadFrame();
 			}
 		} else {
-			this.audio[0].play(1);
 			if(this.isKeyDown("left"))
 				console.log("left");
 			clickManager();
@@ -479,7 +481,7 @@ function vn(settings){
 		}
 		httpRequest.onreadystatechange = function(){
 			if(httpRequest.readyState === 4){
-				if(httpRequest.status === 200){
+				if(httpRequest.status === 200 || httpRequest.status === 0){
 					callback(httpRequest.responseText);
 				} else {
 					console.log("Error "+httpRequest.status);	
