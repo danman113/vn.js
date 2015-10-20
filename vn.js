@@ -67,7 +67,7 @@ function vn(settings){
 
 	//IO\\
 
-	//Object of keypresses. 
+	//Object of key presses. 
 	this.keys = {};
 
 	//Contains all user-defined keybindings. Should be set pre-init
@@ -97,7 +97,7 @@ function vn(settings){
 
 	//IO\\
 
-
+	//keydown event
 	var onKeyDown = function(e){
 		scope.keys[e.keyCode] = true;
 		scope.lastkey=e.keyCode;
@@ -119,6 +119,8 @@ function vn(settings){
 		}
 	};
 
+	//Simple linear search, not enough inputs to warrent
+	//a more complex data structure
 	this.findKey=function(label){
 		for(var i=0;i<this.keybindings.length;i++){
 			if(this.keybindings[i].label==label)
@@ -127,6 +129,7 @@ function vn(settings){
 		return -1;
 	};
 
+	//Simpler interface for getting 
 	this.isKeyDown = function(label){
 		if(this.findKey(label)<0)
 			return false;
@@ -135,6 +138,7 @@ function vn(settings){
 			return true;
 	};
 	
+	//rebinds key, switching keys if the key is currently used
 	this.rebind=function(label,primary,secondary){
 		var k=this.findKey(label);
 		if(k>=0){
@@ -161,6 +165,7 @@ function vn(settings){
 		visualNovel.canvas.height = window.innerHeight;
 	};
 
+	//Mouse handlers, simple enough
 	var mouseUp = function(e){
 		scope.mouse.up = true;
 	};
@@ -173,6 +178,7 @@ function vn(settings){
 		scope.mouse.up=true;
 	};
 
+	//Gets mouse movement in both chrome, IE and firefox.
 	var mouseMove=function(e){
 		if(e.offsetX) {
 			scope.mouse.x = e.offsetX;
@@ -235,6 +241,8 @@ function vn(settings){
 		requestAnimationFrame(disp);
 	};
 
+
+	//Parese main argument and sets default values
 	function parseOptions (options){
 		var defaultSettings = {
 			masterVolume:1,
@@ -253,11 +261,13 @@ function vn(settings){
 
 	//Assets\\
 
-
+	//No explanation needed
 	var audioLoad = function(e){
 		scope.loadedAudio++;
 	};
 
+	//Loops through audioPaths array and creates new audio 
+	//instance for each one
 	this.loadAudio = function(){
 		for(var i = 0; i<this.audioPaths.length;i++){
 			this.audio.push(new this.audioFile(this.audioPaths[i]));
@@ -281,6 +291,7 @@ function vn(settings){
 		scope.loadedImages++;
 	};
 
+	//Loops through imagePaths and creates one 
 	this.loadImages=function(){
 		for(var i=0;i<this.imagePaths.length;i++){
 			this.images.push(new Image());
@@ -290,6 +301,7 @@ function vn(settings){
 		}
 	};
 
+	//Parses scene JSON object and adds it to scenes.
 	var addScene = function(data){
 		console.log(data);
 		try{
@@ -304,6 +316,7 @@ function vn(settings){
 		}
 	};
 
+	//Loops through scenePaths and sends AJAX calls for the JSON data
 	this.loadScenes = function(){
 		for(var i=0;i<this.scenePaths.length;i++){
 			sendHTTP("get",this.scenePaths[i],{},addScene);
@@ -336,6 +349,7 @@ function vn(settings){
 		}
 	};
 
+	//Main draw loop, used exclusively for VN.js, 
 	this.draw = function(){
 		this.context.clearRect(0,0,this.settings.width,this.settings.height);
 		if(this.currentScene<0){
@@ -350,13 +364,15 @@ function vn(settings){
 		}
 	};
 
+	//Initiates recursive scene-graph traversal
 	function drawScene(){
-		for(var i = 0; i<scope.UI.length;i++){
+		for(var i = 0; i < scope.UI.length;i++){
 			var obj = scope.UI[i];
 			recursiveDraw(obj, 0, 0);
 		}
 	}
 
+	//Traverses scene graph to render UI elements
 	function recursiveDraw(obj){
 		var children = obj.getChildren();
 		var collision = obj.isCollision(scope.mouse.x,scope.mouse.y,1,1);
@@ -389,6 +405,7 @@ function vn(settings){
 		}
 	}
 
+	//Initiates click events
 	var handleClicks = function(){
 		scope.mouse.hover = null;
 		scope.mouse.down = null;
@@ -399,6 +416,7 @@ function vn(settings){
 		}
 	};
 
+	//traverses scene graph to detect collision for mouse
 	var clickRecursive = function(obj){
 		var children = obj.getChildren();
 		if(obj.hide)
@@ -445,22 +463,28 @@ function vn(settings){
 
 
 
-	//Misc
+	//Misc\\
 
+
+	//Bounding box collision detection
 	var rectCollision=function(rect1x, rect1y, rect1w, rect1h, rect2x, rect2y, rect2w, rect2h){
 		return rect1x+rect1w > rect2x && rect1x < (rect2x + rect2w) && rect1y+rect1h > rect2y && rect1y < (rect2y + rect2h);
 	};
 
 	var errorMessage = "vn.js error: ";
 
+	//Shortcut for posting error messages
 	var error=function(message){
 		console.error(errorMessage+message);
 	};
 
+	//Argument detection for numbers. Used when 0 is a correct argument
 	var a = function(arg){
 		return arg === undefined || arg ===null;
 	};
 
+	//Used for custom functions in scene JSON, will set a string 
+	//to a function and assign it to a specified property of an object
 	var optionalFunction = function(obj, property,func,args){
 		if(typeof obj[property] == "function"){
 
@@ -473,7 +497,7 @@ function vn(settings){
 
 	};
 
-
+	//Cross platform xmlhttp request 
 	var sendHTTP = function(method,url,postdata,callback){
 		var httpRequest;
 		if (window.XMLHttpRequest) { // Mozilla, Safari, IE7+ ...
@@ -494,6 +518,10 @@ function vn(settings){
 		var post=method.toLowerCase()=="get"?null:JSON.stringify(postdata);
 		httpRequest.open(method, url);
 		httpRequest.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+		
+		//Due to the same origin policy, this will not work if a user
+		//tries to run the program locally. This attempts to inform the
+		//user of the problem
 		try{
 			httpRequest.send(post);
 		} catch (e) {
@@ -504,6 +532,9 @@ function vn(settings){
 
 	//======= Classes =======\\
 
+	//Audiofile class. Contains pointer to element, as well as
+	//methods to play multiple sounds using a linked list 
+	//implementation
 	this.audioFile = function (src,defaultVolume){
 		this.src = src;
 		this.loaded = false;
@@ -544,6 +575,8 @@ function vn(settings){
 		};
 	};
 
+
+	//Simple keybind data structure
 	this.key = function (label, primary, secondary){
 		this.label=label;
 		this.primary=primary;
@@ -551,9 +584,11 @@ function vn(settings){
 	};
 
 	var objDraw = function(){
-		//scope.context.fillRect(this.x, this.y, this.width, this.height);
+		scope.context.fillRect(this.x, this.y, this.width, this.height);
 	};
 
+	//Basic UI object class. Contains objects for implementing scene graph
+	//and some default functionality
 	this.object = function(x, y, w, h){
 		this.x = x;
 		this.y = y;
@@ -623,35 +658,7 @@ function vn(settings){
 		};
 	};
 
-	var buttonDraw = function(obj){
-		scope.context.fillStyle = "#084B8A";
-		scope.context.fillRect(obj.getGlobalX(),obj.getGlobalY(),obj.getWidth(),obj.getHeight());
-		scope.context.fillStyle = "#2E9AFE";
-		scope.context.fillRect(obj.getGlobalX(),obj.getGlobalY(),obj.getWidth(),obj.getHeight()*0.75);
-		if(obj.text){
-			scope.context.font = (obj.getHeight()/2)*obj.fontScale + "px "+obj.font; 
-			scope.context.fillStyle = obj.fontColor;
-			scope.context.fillText(obj.text,obj.getGlobalX()+Math.max(obj.getWidth()/2 - scope.context.measureText(obj.text).width/2,0),obj.getGlobalY()+(obj.getHeight()/2)+((obj.getHeight()/2)*obj.fontScale)*0.4+obj.getHeight()*obj.fontYOffsetPercent,obj.getWidth());
-		}
-	};
-
-	var buttonOnHover = function(obj){
-		scope.context.fillStyle = "#084B8A";
-		scope.context.fillRect(obj.getGlobalX(),obj.getGlobalY(),obj.getWidth(),obj.getHeight());
-		if(obj.text){
-			scope.context.font = (obj.getHeight()/2)*obj.fontScale + "px "+obj.font; 
-			scope.context.fillStyle = obj.fontColor;
-			scope.context.fillText(obj.text,obj.getGlobalX()+Math.max(obj.getWidth()/2 - scope.context.measureText(obj.text).width/2,0),obj.getGlobalY()+(obj.getHeight()/2)+((obj.getHeight()/2)*obj.fontScale)*0.4+obj.getHeight()*obj.fontYOffsetPercent,obj.getWidth());
-		}
-	};
-
-	var drawButton = function(){
-		buttonDraw(this);
-	};
-	var drawOnHover = function(){
-		buttonOnHover(this);
-	};
-
+	//Used to show what parameters object takes
 	var responsiveButtonParameter = {
 		xPercent:"?!Number: Can be substituted for x",
 		x:"!Number",
@@ -667,6 +674,9 @@ function vn(settings){
 		text:"Label"
 	};
 
+	//Basic responsive object class. Uses percent values for both
+	//width and height. Will use parent's coordinate values
+	//if applicable
 	this.responsiveObject = function(options){
 		if((a(options.xPercent) && a(options.x)) || (a(options.yPercent) && a(options.y)) || (a(options.width) && a(options.widthPercent)) || (a(options.height) && a(options.heightPercent))){
 			error("Missing required parameters. Parameter format: ");
@@ -731,6 +741,32 @@ function vn(settings){
 
 	};
 
+	//Draw methods for button class, made outside scope for better memory usage
+	var buttonDraw = function(){
+		var obj = this;
+		scope.context.fillStyle = "#084B8A";
+		scope.context.fillRect(obj.getGlobalX(),obj.getGlobalY(),obj.getWidth(),obj.getHeight());
+		scope.context.fillStyle = "#2E9AFE";
+		scope.context.fillRect(obj.getGlobalX(),obj.getGlobalY(),obj.getWidth(),obj.getHeight()*0.75);
+		if(obj.text){
+			scope.context.font = (obj.getHeight()/2)*obj.fontScale + "px "+obj.font; 
+			scope.context.fillStyle = obj.fontColor;
+			scope.context.fillText(obj.text,obj.getGlobalX()+Math.max(obj.getWidth()/2 - scope.context.measureText(obj.text).width/2,0),obj.getGlobalY()+(obj.getHeight()/2)+((obj.getHeight()/2)*obj.fontScale)*0.4+obj.getHeight()*obj.fontYOffsetPercent,obj.getWidth());
+		}
+	};
+
+	var buttonOnHover = function(){
+		var obj = this;
+		scope.context.fillStyle = "#084B8A";
+		scope.context.fillRect(obj.getGlobalX(),obj.getGlobalY(),obj.getWidth(),obj.getHeight());
+		if(obj.text){
+			scope.context.font = (obj.getHeight()/2)*obj.fontScale + "px "+obj.font; 
+			scope.context.fillStyle = obj.fontColor;
+			scope.context.fillText(obj.text,obj.getGlobalX()+Math.max(obj.getWidth()/2 - scope.context.measureText(obj.text).width/2,0),obj.getGlobalY()+(obj.getHeight()/2)+((obj.getHeight()/2)*obj.fontScale)*0.4+obj.getHeight()*obj.fontYOffsetPercent,obj.getWidth());
+		}
+	};
+
+	//Basic button class. You can hover over it and click it
 	this.button = function(options){
 		scope.responsiveObject.call(this, options);
 		this.text = options.text;
@@ -738,9 +774,9 @@ function vn(settings){
 		this.fontColor = options.fontColor?options.fontColor:"white";
 		this.font = options.font?options.font:scope.settings.font;
 		this.fontYOffsetPercent = options.fontYOffsetPercent?options.fontYOffsetPercent:-0.15;
-		this.draw = drawButton;
-		this.onHover = drawOnHover;
-		this.onDown = drawOnHover;
+		this.draw = buttonDraw;
+		this.onHover = buttonOnHover;
+		this.onDown = buttonOnHover;
 		optionalFunction(this,"onClick",function(){
 			console.log(this);
 		});
@@ -765,6 +801,8 @@ function vn(settings){
 		}
 	};
 
+	//Image button, you can use custom images for the up, hover, and down
+	//states of the button
 	this.imageButton = function(options){
 		scope.button.call(this,options);
 		if(!options.imageUp){
@@ -787,6 +825,7 @@ function vn(settings){
 		}
 	};
 
+	//Really simple color square. It simply draws a rect.
 	this.colorSquare = function(options){
 		scope.responsiveObject.call(this, options);
 		this.backgroundColor = options.backgroundColor;
@@ -795,6 +834,8 @@ function vn(settings){
 		this.onRelease = function(){};
 	};
 
+	//Textarea class, it renders text in a specific area 
+	//and will wrap the text as best it can given it's dimensions
 	this.textArea = function(options){
 		scope.responsiveObject.call(this, options);
 		if(!options.text)
@@ -849,6 +890,9 @@ function vn(settings){
 		};
 	};
 
+	//Like a textarea, but will show each letter gradually, as if
+	//typed on a typewriter or on an old computer. Lots of customization
+	//options
 	this.typewriter = function(options){
 		scope.responsiveObject.call(this, options);
 		if(!options.text)
@@ -954,13 +998,14 @@ function vn(settings){
 			}
 		};
 	};
-
+	
+	//Scene class, uses javascript object hash table for quick searching
+	//of frames. Also will take a scene JSON object on initialization and 
+	//make a local instance of it with all associated methods 
 	this.scene = function(options){
 		var init = function(obj){
 			//Add frames to scene
-			console.log("STEP 1");
 			for(var i = 0; i<options.frames.length;i++){
-				console.log("STEP 1");
 				var frame = new scope.frame(options.frames[i]);
 				obj.search[frame.label] = frame;
 				obj.frames.push(frame);
@@ -969,11 +1014,9 @@ function vn(settings){
 			}
 			//adds connections
 			for(var i = 0; i<options.frames.length;i++){
-				console.log("STEP 2");
 				obj.frames[i].connections=[];
 				var connections = options.frames[i].connections?options.frames[i].connections:[];
 				for(var x = 0, count = connections.length; x < count;x++){
-					console.log("STEP 3");
 					if(connections[x]){
 						if(connections[x] == "next"){
 							if(i+1<obj.frames.length){
@@ -1010,6 +1053,7 @@ function vn(settings){
 		};
 	};
 
+	//Frame class, contains UI objects that will be loaded on the scene.
 	this.frame = function(options){
 		var init = function(obj){
 			for(var i = 0; i<options.objects.length;i++){
