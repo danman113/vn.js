@@ -291,8 +291,10 @@ function vn(settings){
 	};
 
 	var addScene = function(data){
+		console.log(data);
 		try{
 			var scene = JSON.parse(data);
+			console.log(scene);
 			scope.sceneData.push(scene);
 			scope.scenes.push(new scope.scene(scene));
 			scope.loadedScenes++;			
@@ -626,20 +628,20 @@ function vn(settings){
 		scope.context.fillRect(obj.getGlobalX(),obj.getGlobalY(),obj.getWidth(),obj.getHeight());
 		scope.context.fillStyle = "#2E9AFE";
 		scope.context.fillRect(obj.getGlobalX(),obj.getGlobalY(),obj.getWidth(),obj.getHeight()*0.75);
-		if(obj.label){
+		if(obj.text){
 			scope.context.font = (obj.getHeight()/2)*obj.fontScale + "px "+obj.font; 
 			scope.context.fillStyle = obj.fontColor;
-			scope.context.fillText(obj.label,obj.getGlobalX()+Math.max(obj.getWidth()/2 - scope.context.measureText(obj.label).width/2,0),obj.getGlobalY()+(obj.getHeight()/2)+((obj.getHeight()/2)*obj.fontScale)*0.4+obj.getHeight()*obj.fontYOffsetPercent,obj.getWidth());
+			scope.context.fillText(obj.text,obj.getGlobalX()+Math.max(obj.getWidth()/2 - scope.context.measureText(obj.text).width/2,0),obj.getGlobalY()+(obj.getHeight()/2)+((obj.getHeight()/2)*obj.fontScale)*0.4+obj.getHeight()*obj.fontYOffsetPercent,obj.getWidth());
 		}
 	};
 
 	var buttonOnHover = function(obj){
 		scope.context.fillStyle = "#084B8A";
 		scope.context.fillRect(obj.getGlobalX(),obj.getGlobalY(),obj.getWidth(),obj.getHeight());
-		if(obj.label){
+		if(obj.text){
 			scope.context.font = (obj.getHeight()/2)*obj.fontScale + "px "+obj.font; 
 			scope.context.fillStyle = obj.fontColor;
-			scope.context.fillText(obj.label,obj.getGlobalX()+Math.max(obj.getWidth()/2 - scope.context.measureText(obj.label).width/2,0),obj.getGlobalY()+(obj.getHeight()/2)+((obj.getHeight()/2)*obj.fontScale)*0.4+obj.getHeight()*obj.fontYOffsetPercent,obj.getWidth());
+			scope.context.fillText(obj.text,obj.getGlobalX()+Math.max(obj.getWidth()/2 - scope.context.measureText(obj.text).width/2,0),obj.getGlobalY()+(obj.getHeight()/2)+((obj.getHeight()/2)*obj.fontScale)*0.4+obj.getHeight()*obj.fontYOffsetPercent,obj.getWidth());
 		}
 	};
 
@@ -662,7 +664,7 @@ function vn(settings){
 		fontScale:"Number: Scales the font",
 		fontColor:"Color: Sets the color of text",
 		fontYOffsetPercent:"Number: ",
-		label:"Label"
+		text:"Label"
 	};
 
 	this.responsiveObject = function(options){
@@ -731,7 +733,7 @@ function vn(settings){
 
 	this.button = function(options){
 		scope.responsiveObject.call(this, options);
-		this.label = options.label;
+		this.text = options.text;
 		this.fontScale = options.fontScale?options.fontScale:1;
 		this.fontColor = options.fontColor?options.fontColor:"white";
 		this.font = options.font?options.font:scope.settings.font;
@@ -756,10 +758,10 @@ function vn(settings){
 
 	var imageButtonDraw = function(obj, image){
 		scope.context.drawImage(image,obj.getGlobalX(),obj.getGlobalY(),obj.getWidth(),obj.getHeight());
-		if(obj.label){
+		if(obj.text){
 			scope.context.font = (obj.getHeight()/2)*obj.fontScale + "px "+obj.font; 
 			scope.context.fillStyle = obj.fontColor;
-			scope.context.fillText(obj.label,obj.getGlobalX()+Math.max(obj.getWidth()/2 - scope.context.measureText(obj.label).width/2,0),obj.getGlobalY()+(obj.getHeight()/2)+((obj.getHeight()/2)*obj.fontScale)*0.4+obj.getHeight()*obj.fontYOffsetPercent,obj.getWidth());
+			scope.context.fillText(obj.text,obj.getGlobalX()+Math.max(obj.getWidth()/2 - scope.context.measureText(obj.text).width/2,0),obj.getGlobalY()+(obj.getHeight()/2)+((obj.getHeight()/2)*obj.fontScale)*0.4+obj.getHeight()*obj.fontYOffsetPercent,obj.getWidth());
 		}
 	};
 
@@ -798,7 +800,7 @@ function vn(settings){
 		if(!options.text)
 			error("Missing required parameters. Missing parameter: \"text\"");
 		this.fontSize = options.fontSize?options.fontSize:scope.settings.fontSize;
-		this.fontColor = options.fontColor?options.fontColor:"white";
+		this.fontColor = options.fontColor?options.fontColor:"black";
 		this.font = options.font?options.font:scope.settings.font;
 		this.text = options.text;
 		this.lineHeight = options.lineHeight?options.lineHeight:0;
@@ -852,7 +854,7 @@ function vn(settings){
 		if(!options.text)
 			error("Missing required parameters. Missing parameter: \"text\"");
 		this.fontSize = options.fontSize?options.fontSize:scope.settings.fontSize;
-		this.fontColor = options.fontColor?options.fontColor:"white";
+		this.fontColor = options.fontColor?options.fontColor:"black";
 		this.font = options.font?options.font:scope.settings.font;
 		this.text = options.text;
 		this.lineHeight = options.lineHeight?options.lineHeight:0;
@@ -956,7 +958,9 @@ function vn(settings){
 	this.scene = function(options){
 		var init = function(obj){
 			//Add frames to scene
+			console.log("STEP 1");
 			for(var i = 0; i<options.frames.length;i++){
+				console.log("STEP 1");
 				var frame = new scope.frame(options.frames[i]);
 				obj.search[frame.label] = frame;
 				obj.frames.push(frame);
@@ -965,9 +969,11 @@ function vn(settings){
 			}
 			//adds connections
 			for(var i = 0; i<options.frames.length;i++){
+				console.log("STEP 2");
 				obj.frames[i].connections=[];
-				var connections = options.frames[i].connections;
+				var connections = options.frames[i].connections?options.frames[i].connections:[];
 				for(var x = 0, count = connections.length; x < count;x++){
+					console.log("STEP 3");
 					if(connections[x]){
 						if(connections[x] == "next"){
 							if(i+1<obj.frames.length){

@@ -3,9 +3,8 @@
 	"frames":[
 		{	
 			"label":"start",
-			"text":"This is text",
 			"objects":[
-						{"type":"button","label":"Play","onRelease":"scope.scenes[scope.currentScene].next();","xPercent":0.25,"yPercent":0.25,"widthPercent":0.5,"height":50}
+						{"type":"button","text":"Play","onRelease":"scope.scenes[scope.currentScene].next();","xPercent":0.25,"yPercent":0.25,"widthPercent":0.5,"height":50}
 									
 					],
 			"connections":["next"]
@@ -20,7 +19,7 @@
 		{
 			"objects":[
 						{"type":"textArea","xPercent":0.25,"y":100,"showSize":true,"widthPercent":0.5,"height":200,"fontSize":30,"fontColor":"Black","text":"You got eaten by a clown!"},
-						{"type":"button","onRelease":"scope.scenes[scope.currentScene].next();","label":"Back to Main Menu","xPercent":0.25,"yPercent":0.25,"widthPercent":0.5,"height":50}
+						{"type":"button","onRelease":"scope.scenes[scope.currentScene].next();","text":"Back to Main Menu","xPercent":0.25,"yPercent":0.25,"widthPercent":0.5,"height":50}
 									
 					],
 			"connections":["start"]
