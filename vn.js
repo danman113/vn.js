@@ -12,8 +12,9 @@
 [X] ParseSettings
 [X] Scene Stuff
 [X] Import Data
-[ ] Add deltaTime to loop
-[ ] Add touchscreen controls
+[X] Add deltaTime to loop
+[X] Added simple image class
+[X] Add touchscreen controls
 */
 
 //Main object
@@ -27,12 +28,6 @@ function vn(settings){
 	//Local version of scope, used for closures
 	var scope = this;
 	
-
-	//Settings variables\\
-
-
-	//Default settings object, contains all default settings.
-
 	parseOptions(settings);	
 
 	//Asset variables\\
@@ -62,6 +57,15 @@ function vn(settings){
 	//Keeps track of the scene and frame
 	this.currentScene = -1;
 
+	//Stuff for deltaTime
+	var now = window.performance?window.performance:Date;
+	this.now = function(){
+		return now.now();
+	};
+	var deltaTime = 1;
+	var lastTime = this.now();
+	var target = 1000/60;
+	
 	//Contains all UI elements
 	this.UI = [];
 
@@ -72,6 +76,13 @@ function vn(settings){
 
 	//Contains all user-defined keybindings. Should be set pre-init
 	this.keybindings = [];
+
+	//Contains all touch objects
+	this.touches = [];
+	this.taps = [];
+
+	//Keeps track of total frames
+	this.frameCount=0;
 
 	//Object for mouse handling, 
 	this.mouse = {
@@ -206,6 +217,47 @@ function vn(settings){
 		scope.mouse.lastMouseUp = scope.mouse.up;
 	};
 
+	//Touchscreen handlers
+	var touchStart = function(e){
+		var touches = e.touches;
+		scope.touches = [];
+		for (var i = 0; i < touches.length; i++) {
+			scope.touches.push(new scope.touch(touches[i]));
+		}
+		e.preventDefault();
+	};
+
+	var touchMove = function(e){
+		var touches = e.touches;
+		for (var i = 0; i < touches.length; i++) {
+			scope.touches[i].x=touches[i].clientX;
+			scope.touches[i].y=touches[i].clientY;
+			scope.touches[i].radius=touches[i].radiusX || 25;
+		}
+		e.preventDefault();
+	};
+
+	var touchEnd = function(e){
+		var touches = e.touches;
+		scope.touches = [];
+		for (var i = 0; i < touches.length; i++) {
+			scope.touches.push(new scope.touch(touches[i]));
+		}
+		var taps = e.changedTouches;
+		for (var i = 0; i < taps.length; i++) {
+			scope.taps.push(new scope.touch(taps[i]));
+		}
+	};
+
+	var touchCancel = function(e){
+		var touches = e.touches;
+		scope.touches = [];
+		for (var i = 0; i < touches.length; i++) {
+			scope.touches.push(new scope.touch(touches[i]));
+		}
+		e.preventDefault();
+	};
+
 	//Initialization\\
 	
 
@@ -235,12 +287,16 @@ function vn(settings){
 		this.canvas.addEventListener('mousedown', mouseDown, false);
 		this.canvas.addEventListener('mousemove', mouseMove, false);
 		this.canvas.addEventListener('mouseout', mouseOut, false);
+		this.canvas.addEventListener('touchstart', touchStart, false);
+		this.canvas.addEventListener('touchmove', touchMove, false);
+		this.canvas.addEventListener('touchend', touchEnd, false);
+		this.canvas.addEventListener('touchcancel', touchCancel, false);
+		target = 1000/this.settings.targetFps;
 		this.loadScenes();
 		this.loadAudio();
 		this.loadImages();
 		requestAnimationFrame(disp);
 	};
-
 
 	//Parese main argument and sets default values
 	function parseOptions (options){
@@ -251,7 +307,8 @@ function vn(settings){
 			font:"arial",
 			fontSize:13,
 			fullscreen:true,
-			preventKeyDefaults:true
+			preventKeyDefaults:true,
+			targetFps:60
 		};
 		scope.settings = defaultSettings;
 		for(var option in options)
@@ -303,7 +360,6 @@ function vn(settings){
 
 	//Parses scene JSON object and adds it to scenes.
 	var addScene = function(data){
-		console.log(data);
 		try{
 			var scene = JSON.parse(data);
 			console.log(scene);
@@ -327,10 +383,13 @@ function vn(settings){
 	//Display loop\\
 
 	var disp = function(){
+		deltaTime = (scope.now()-lastTime)/target;
 		if(scope.update)
-			scope.update();
+			scope.update(deltaTime);
 		if(scope.draw)
-			scope.draw();
+			scope.draw(deltaTime);
+		this.frameCount++;
+		lastTime = scope.now();
 		requestAnimationFrame(disp);
 	};
 	
@@ -344,8 +403,8 @@ function vn(settings){
 			if(this.isKeyDown("left"))
 				console.log("left");
 			clickManager();
-			handleClicks();
-				
+			handleClicks();	
+			tapManager();
 		}
 	};
 
@@ -361,6 +420,7 @@ function vn(settings){
 			this.context.fillRect(this.settings.width/2 - 100, this.settings.height/2 - 50, 100 *(loaded/total) , 50);
 		} else {
 			drawScene();
+			drawTouches();
 		}
 	};
 
@@ -405,6 +465,16 @@ function vn(settings){
 		}
 	}
 
+	//Draws touches on screen
+	function drawTouches(){
+		for (var i = 0; i<scope.touches.length;i++) {
+			scope.context.fillStyle="grey";
+			scope.context.beginPath();
+			scope.context.arc(scope.touches[i].x, scope.touches[i].y, scope.touches[i].radius || 25, 0, 2 * Math.PI, false);
+			scope.context.fill();
+		}
+	}
+
 	//Initiates click events
 	var handleClicks = function(){
 		scope.mouse.hover = null;
@@ -413,7 +483,51 @@ function vn(settings){
 			var obj = scope.UI[i];
 			if(clickRecursive(obj))
 				return true;
+			if(touchRecursive(obj))
+				return true;
 		}
+	};
+
+	//
+	var tapManager = function(){
+		scope.taps = [];
+	};
+
+	//traverses scene graph for touch collision
+	var touchRecursive = function(obj){
+		var children = obj.getChildren();
+		if(obj.hide)
+			return false;
+		if(children.length>0){
+			for (var i = children.length - 1; i >= 0; i--) {
+				if(touchRecursive(children[i]))
+					return false;
+			}
+		}
+		for (var i = 0; i < scope.touches.length; i++) {
+			var collision = obj.isCollision(scope.touches[i].x,scope.touches[i].y,scope.touches[i].radius,scope.touches[i].radius);
+			if(collision){
+				if(!scope.mouse.hover && !scope.mouse.down)
+					scope.mouse.hover = obj;
+				if(obj.onClick){
+					obj.onClick(scope);
+				}
+			}
+		}
+		for (var i = 0; i < scope.taps.length; i++) {
+			var collision = obj.isCollision(scope.taps[i].x,scope.taps[i].y,scope.taps[i].radius,scope.taps[i].radius);
+			if(collision && !scope.mouse.down){
+				if(obj.onRelease){
+					obj.onRelease(scope);
+					scope.mouse.down = obj;
+					scope.mouse.hover = null;
+				}
+			}
+		}
+		if(scope.mouse.hover || scope.mouse.down)
+			return true;
+		else
+			return false;
 	};
 
 	//traverses scene graph to detect collision for mouse
@@ -442,7 +556,6 @@ function vn(settings){
 		}else if(collision && scope.mouse.click){
 			if(obj.onClick){
 				obj.onClick(scope);
-				
 				return true;
 			}
 		} else if (collision && scope.mouse.clickRelease){
@@ -489,12 +602,10 @@ function vn(settings){
 		if(typeof obj[property] == "function"){
 
 		} else if (typeof property == "string"){
-			console.log(scope);
 			obj[property] = new Function("scope",obj[property]);
 		} else {
 			obj[property] = func;
 		}
-
 	};
 
 	//Cross platform xmlhttp request 
@@ -529,6 +640,7 @@ function vn(settings){
 			error("It appears you are trying to run this game locally, you must either upload it to a server, or use a local enviroment to run it");
 		}
 	};
+
 
 	//======= Classes =======\\
 
@@ -694,7 +806,6 @@ function vn(settings){
 		this.heightPercent = options.heightPercent;
 		this.xPercent = options.xPercent;
 		this.yPercent = options.yPercent;
-
 		this.getGlobalX = function(){
 			return getX(this);
 		};
@@ -998,6 +1109,24 @@ function vn(settings){
 			}
 		};
 	};
+
+	//Simple image on the screen. Will use default image width/height without
+	//parameters.
+	this.image = function(options){
+		if(options.image && a(options.width) && a(options.height)){
+			options.width = options.image.width;
+			options.height = options.image.height;
+		}
+		scope.button.call(this,options);
+		if(!options.image){
+			error("Missing required parameters. image.image.");
+		}
+		this.fontYOffsetPercent = this.fontYOffsetPercent!==-0.15?this.fontYOffsetPercent:0;
+		this.image = options.image;
+		this.draw = function(){imageButtonDraw(this, this.image);};
+		this.onHover = this.draw;
+		this.onDown = this.draw;	
+	};
 	
 	//Scene class, uses javascript object hash table for quick searching
 	//of frames. Also will take a scene JSON object on initialization and 
@@ -1080,6 +1209,13 @@ function vn(settings){
 		this.loadFrame = function(){
 			scope.UI = this.objects;
 		};
+	};
+
+	//Touch object
+	this.touch = function(e){
+		this.x = e.clientX;
+		this.y = e.clientY;
+		this.radius = e.radiusX || 25;
 	};
 }
 
