@@ -15,6 +15,10 @@
 [X] Add deltaTime to loop
 [X] Added simple image class
 [X] Add touchscreen controls
+[ ] Add bgMusic class
+[ ] Add playSound class
+[ ] Add update loop
+[ ] Add custom class
 */
 
 //Main object
@@ -170,10 +174,10 @@ function vn(settings){
 
 	//Resize window
 	var resize = function(){
-		visualNovel.settings.width = window.innerWidth;
-		visualNovel.settings.height = window.innerHeight;
-		visualNovel.canvas.width = window.innerWidth;
-		visualNovel.canvas.height = window.innerHeight;
+		scope.settings.width = window.innerWidth;
+		scope.settings.height = window.innerHeight;
+		scope.canvas.width = window.innerWidth;
+		scope.canvas.height = window.innerHeight;
 	};
 
 	//Mouse handlers, simple enough
@@ -1167,6 +1171,19 @@ function vn(settings){
 		this.lastFrame = null;
 		this.currentFrame = null;
 		init(this);
+		this.goToConnection = function(index){
+			if(!this.currentFrame)
+				return false;
+			if(this.currentFrame.connections.length>0){
+				for (var i = this.currentFrame.objects.length - 1; i >= 0; i--) {
+					if(this.currentFrame.objects[i].reset)
+						this.currentFrame.objects[i].reset();
+				}
+				this.currentFrame.connections[index].loadFrame();
+				this.lastFrame = this.currentFrame;
+				this.currentFrame = this.currentFrame.connections[index];
+			}
+		};
 		this.next = function(){
 			if(!this.currentFrame)
 				return false;
@@ -1174,7 +1191,7 @@ function vn(settings){
 				for (var i = this.currentFrame.objects.length - 1; i >= 0; i--) {
 					if(this.currentFrame.objects[i].reset)
 						this.currentFrame.objects[i].reset();
-				};
+				}
 				this.currentFrame.connections[0].loadFrame();
 				this.lastFrame = this.currentFrame;
 				this.currentFrame = this.currentFrame.connections[0];
