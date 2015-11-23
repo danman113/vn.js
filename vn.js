@@ -964,6 +964,12 @@ function vn(settings){
 		var textMatrix = [];
 		var lastHeight = this.getHeight();
 		var lastWidth = this.getWidth();
+		optionalFunction(this,"onClick",function(){
+			console.log(this);
+		});
+		optionalFunction(this,"onRelease",function(){
+			console.log(this);
+		});
 		var textDraw = function(){
 			if(textMatrix.length<=0 || (lastHeight!=this.getHeight() || lastWidth!=this.getWidth()))
 				this.format();
