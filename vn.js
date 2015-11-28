@@ -15,10 +15,11 @@
 [X] Add deltaTime to loop
 [X] Added simple image class
 [X] Add touchscreen controls
-[ ] Add bgMusic class
-[ ] Add playSound class
-[ ] Add update loop
-[ ] Add custom class
+[X] Add bgMusic class
+[X] Add playSound class
+[X] Add update loop
+[X] Add custom class
+[ ] Add script support
 */
 
 //Main object
@@ -396,6 +397,41 @@ function vn(settings){
 		lastTime = scope.now();
 		requestAnimationFrame(disp);
 	};
+
+	var updateUI = function(){
+		for(var i = 0; i < scope.UI.length;i++){
+			var obj = scope.UI[i];
+			recursiveUpdate(obj, 0, 0);
+		}
+	};
+
+	var recursiveUpdate = function(obj){
+		var children = obj.getChildren();
+		if(obj.hide)
+			return false;
+		if(obj.update)
+			obj.update(scope,obj);
+		if(children.length>0){
+			var childrenHovered = false;
+			for (var i = 0, len = children.length; i < len; i++) {
+				recursiveUpdate(children[i]);
+			}
+		}
+	};
+
+	this.recursiveCall = function(method,params){
+		for (var i = 0; i < scope.UI.length; i++) {
+			recurse(scope.UI[i],method,params);
+		}
+	};
+	var recurse = function(obj,method,params){
+		var children = obj.getChildren();
+		if(obj[method])
+			obj[method](params);
+		for (var i = 0; i < children.length; i++) {
+			recurse(children[i],method,params);
+		}
+	};
 	
 	this.update = function(){
 		if(this.currentScene<0){
@@ -407,7 +443,8 @@ function vn(settings){
 			if(this.isKeyDown("left"))
 				console.log("left");
 			clickManager();
-			handleClicks();	
+			handleClicks();
+			updateUI();
 			tapManager();
 		}
 	};
@@ -448,17 +485,17 @@ function vn(settings){
 			} else if(obj.onHover){
 				obj.onHover();
 			} else if(obj.draw){
-				obj.draw();
+				obj.draw(scope,obj);
 			}
 		} else if(scope.mouse.hover == obj){
 			if(obj.onHover){
 				obj.onHover();
 			} else if(obj.draw){
-				obj.draw();
+				obj.draw(scope,obj);
 			}
 		} else {
 			if(obj.draw){
-				obj.draw();
+				obj.draw(scope,obj);
 			}
 		}
 		if(children.length>0){
@@ -681,12 +718,14 @@ function vn(settings){
 			}
 		};
 
-		this.stop=function(){
+		this.stop=function(keep){
 			this.element.pause();
-			try{
-				this.element.currentTime = 0;
-			} catch(e){
-				console.log(e);
+			if(!keep){
+				try{
+					this.element.currentTime = 0;
+				} catch(e){
+					console.log(e);
+				}
 			}
 		};
 	};
@@ -1137,6 +1176,96 @@ function vn(settings){
 		this.onHover = this.draw;
 		this.onDown = this.draw;	
 	};
+
+	//Plays an audio track constantly 
+	this.bgMusic = function(options){
+		scope.responsiveObject.call(this, {x:5,y:5,width:5,height:5});
+		this.drawHelper = options.drawHelper === false;
+		this.backgroundColor = "rgba(0,0,0,.5)";
+		this.audioElementIndex = options.audioElementIndex===undefined?-1:options.audioElementIndex;
+		this.volume = options.volume === undefined?0:options.volume;
+		this.draw = function(){
+			if(this.drawHelper){
+				colorDraw();
+			}
+		};
+
+		this.update = function(){
+			if(this.audioElementIndex>=0){
+				scope.audio[this.audioElementIndex].play(this.volume);
+			}
+		};
+
+		this.stop = function(elements){
+			var sounds = [];
+			for (var i = 0; i < elements.length; i++) {
+				if(elements[i].audioElementIndex>=0){
+					sounds.push(elements[i].audioElementIndex);
+				}
+			}
+			console.log(sounds);
+			if(this.audioElementIndex>=0 && sounds.indexOf(this.audioElementIndex)<0){
+				scope.audio[this.audioElementIndex].stop();
+			}
+		};
+	};
+
+	//Plays a sound once, then never again
+	this.sound = function(options){
+		scope.responsiveObject.call(this, {x:5,y:5,width:5,height:5});
+		this.drawHelper = options.drawHelper !== false;
+		this.backgroundColor = "rgba(0,0,0,.5)";
+		this.audioElementIndex = options.audioElementIndex===undefined?-1:options.audioElementIndex;
+		this.volume = options.volume === undefined?0:options.volume;
+		this.played = false;
+		this.draw = function(){
+			if(this.drawHelper){
+				colorDraw();
+			}
+		};
+
+		this.update = function(){
+			if(this.audioElementIndex>=0){
+				if(scope.audio[this.audioElementIndex].element.currentTime>0)
+					this.played = true;
+				if(!this.played)
+				scope.audio[this.audioElementIndex].play(this.volume);
+			}
+		};
+
+		this.stop = function(elements){
+			var sounds = [];
+			this.played = false;
+			if(this.audioElementIndex>=0){
+				scope.audio[this.audioElementIndex].stop();
+			}
+		};
+	};
+
+	//Custom element
+	this.custom = function(options){
+		scope.responsiveObject.call(this, options);
+		if(typeof options.draw === "string"){
+			this.draw = new Function(["scope","obj"],options.draw);
+		} else if (typeof options.draw === "function"){
+			this.draw = options.draw;
+		} else {
+			this.draw = function(){
+
+			};
+		}
+
+		if(typeof options.update === "string"){
+			this.update = new Function(["scope","obj"],options.update);
+		} else if (typeof options.update === "function"){
+			this.update = options.update;
+		} else {
+			this.update = function(){
+
+			};
+		}
+
+	};
 	
 	//Scene class, uses javascript object hash table for quick searching
 	//of frames. Also will take a scene JSON object on initialization and 
@@ -1148,7 +1277,7 @@ function vn(settings){
 				var frame = new scope.frame(options.frames[i]);
 				obj.search[frame.label] = frame;
 				obj.frames.push(frame);
-				if(i == 0)
+				if(i === 0)
 					obj.currentFrame = frame;
 			}
 			//adds connections
@@ -1230,6 +1359,7 @@ function vn(settings){
 		this.connections = [];
 		init(this);
 		this.loadFrame = function(){
+			scope.recursiveCall("stop",this.objects);
 			scope.UI = this.objects;
 		};
 	};
