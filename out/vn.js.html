@@ -1,4 +1,32 @@
-/*======= Todo ========*\
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: vn.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: vn.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/*======= Todo ========*\
 [X] Add children to draw
 [X] Add addChild method
 [X] Add better mousehandling for onclicks
@@ -47,7 +75,7 @@ function vn(settings){
 	 * An array of audio paths to load on init. 
 	 * Set these to an array of all of the audio URLs and vn.js
 	 * will load them when the init method is called.
-	 * @type {Array.<String>}
+	 * @type {Array.&lt;String>}
 	 */
 	this.audioPaths = [];
 
@@ -55,7 +83,7 @@ function vn(settings){
 	 * An array of image paths to load on init. 
 	 * Set these to an array of all of the image URLs and vn.js 
 	 * will load them when the init method is called.
-	 * @type {Array.<String>}
+	 * @type {Array.&lt;String>}
 	 */
 	this.imagePaths = [];
 
@@ -63,7 +91,7 @@ function vn(settings){
 	 * An array of scene paths to load on init. 
 	 * Set these to an array of all of the scene URLs and vn.js 
 	 * will load them when the init method is called.
-	 * @type {Array.<String>}
+	 * @type {Array.&lt;String>}
 	 */
 	this.scenePaths = [];
 
@@ -129,7 +157,7 @@ function vn(settings){
 	//Contains all UI elements
 	/**
 	 * Contains all UI elements currently rendered on screen. 
-	 * @type {Array.<Object>}
+	 * @type {Array.&lt;Object>}
 	 */
 	this.UI = [];
 
@@ -147,13 +175,13 @@ function vn(settings){
 
 	/**
 	 * Contains all user-defined keybindings. Should be set pre-init
-	 * @type {Array.<Object>}
+	 * @type {Array.&lt;Object>}
 	 */
 	this.keybindings = [];
 
 	/**
 	 * Contains all touch objects
-	 * @type {Array.<Object>}
+	 * @type {Array.&lt;Object>}
 	 */
 	this.touches = [];
 	this.taps = [];
@@ -204,7 +232,7 @@ function vn(settings){
 	//Prevents default key actions of keybindings
 	var prevent=function(e){
 		var keys=[];
-		for(var i=0;i<scope.keybindings.length;i++){
+		for(var i=0;i&lt;scope.keybindings.length;i++){
 			keys.push(scope.keybindings[i].primary);
 			keys.push(scope.keybindings[i].secondary);
 		}
@@ -220,7 +248,7 @@ function vn(settings){
 	 * @return {Number} Index of key in keys object
 	 */
 	this.findKey=function(label){
-		for(var i=0;i<this.keybindings.length;i++){
+		for(var i=0;i&lt;this.keybindings.length;i++){
 			if(this.keybindings[i].label==label)
 				return i;
 		}
@@ -233,7 +261,7 @@ function vn(settings){
 	 * @return {Boolean} Wether or not that key is pressed
 	 */
 	this.isKeyDown = function(label){
-		if(this.findKey(label)<0)
+		if(this.findKey(label)&lt;0)
 			return false;
 		var keybinding = this.keybindings[this.findKey(label)];
 		if(keybinding.primary in this.keys || keybinding.secondary in this.keys)
@@ -254,10 +282,10 @@ function vn(settings){
 				primary=this.keybindings[k].primary;
 			if(!secondary)
 				secondary=this.keybindings[k].secondary;
-			for(var i=0;i<this.keybindings.length;i++){
-				if(i!=k && this.keybindings[i].primary==primary)
+			for(var i=0;i&lt;this.keybindings.length;i++){
+				if(i!=k &amp;&amp; this.keybindings[i].primary==primary)
 					this.keybindings[i].primary=this.keybindings[k].primary;
-				if(i!=k && this.keybindings[i].secondary==secondary)
+				if(i!=k &amp;&amp; this.keybindings[i].secondary==secondary)
 					this.keybindings[i].secondary=this.keybindings[k].secondary;
 			}
 			this.keybindings[k].primary=primary;
@@ -300,12 +328,12 @@ function vn(settings){
 
 	//Makes it so mouse.click and mouse.clickRelease work
 	var clickManager = function(){
-		if(!scope.mouse.lastMouseUp  && scope.mouse.up){
+		if(!scope.mouse.lastMouseUp  &amp;&amp; scope.mouse.up){
 			scope.mouse.clickRelease=true;
 		} else {
 			scope.mouse.clickRelease=false;
 		}
-		if(scope.mouse.lastMouseUp  && !scope.mouse.up){
+		if(scope.mouse.lastMouseUp  &amp;&amp; !scope.mouse.up){
 			scope.mouse.click=true;
 		} else {
 			scope.mouse.click=false;
@@ -318,7 +346,7 @@ function vn(settings){
 	var touchStart = function(e){
 		var touches = e.touches;
 		scope.touches = [];
-		for (var i = 0; i < touches.length; i++) {
+		for (var i = 0; i &lt; touches.length; i++) {
 			scope.touches.push(new scope.touch(touches[i]));
 		}
 		e.preventDefault();
@@ -326,7 +354,7 @@ function vn(settings){
 
 	var touchMove = function(e){
 		var touches = e.touches;
-		for (var i = 0; i < touches.length; i++) {
+		for (var i = 0; i &lt; touches.length; i++) {
 			scope.touches[i].x=touches[i].clientX;
 			scope.touches[i].y=touches[i].clientY;
 			scope.touches[i].radius=touches[i].radiusX || 25;
@@ -337,11 +365,11 @@ function vn(settings){
 	var touchEnd = function(e){
 		var touches = e.touches;
 		scope.touches = [];
-		for (var i = 0; i < touches.length; i++) {
+		for (var i = 0; i &lt; touches.length; i++) {
 			scope.touches.push(new scope.touch(touches[i]));
 		}
 		var taps = e.changedTouches;
-		for (var i = 0; i < taps.length; i++) {
+		for (var i = 0; i &lt; taps.length; i++) {
 			scope.taps.push(new scope.touch(taps[i]));
 		}
 	};
@@ -349,7 +377,7 @@ function vn(settings){
 	var touchCancel = function(e){
 		var touches = e.touches;
 		scope.touches = [];
-		for (var i = 0; i < touches.length; i++) {
+		for (var i = 0; i &lt; touches.length; i++) {
 			scope.touches.push(new scope.touch(touches[i]));
 		}
 		e.preventDefault();
@@ -427,7 +455,7 @@ function vn(settings){
 	//Loops through audioPaths array and creates new audio 
 	//instance for each one
 	this.loadAudio = function(){
-		for(var i = 0; i<this.audioPaths.length;i++){
+		for(var i = 0; i&lt;this.audioPaths.length;i++){
 			this.audio.push(new this.audioFile(this.audioPaths[i]));
 			this.audio[i].element=document.createElement('audio');
 			this.audio[i].element.src=this.audio[i].src;
@@ -451,7 +479,7 @@ function vn(settings){
 
 	//Loops through imagePaths and creates one 
 	this.loadImages=function(){
-		for(var i=0;i<this.imagePaths.length;i++){
+		for(var i=0;i&lt;this.imagePaths.length;i++){
 			this.images.push(new Image());
 			this.images[i].onload = imageLoad;
 			this.images[i].src = this.imagePaths[i];
@@ -475,7 +503,7 @@ function vn(settings){
 
 	//Loops through scenePaths and sends AJAX calls for the JSON data
 	this.loadScenes = function(){
-		for(var i=0;i<this.scenePaths.length;i++){
+		for(var i=0;i&lt;this.scenePaths.length;i++){
 			sendHTTP("get",this.scenePaths[i],{},addScene);
 		}
 	};
@@ -495,7 +523,7 @@ function vn(settings){
 	};
 
 	var updateUI = function(){
-		for(var i = 0; i < scope.UI.length;i++){
+		for(var i = 0; i &lt; scope.UI.length;i++){
 			var obj = scope.UI[i];
 			recursiveUpdate(obj, 0, 0);
 		}
@@ -509,14 +537,14 @@ function vn(settings){
 			obj.update(scope,obj);
 		if(children.length>0){
 			var childrenHovered = false;
-			for (var i = 0, len = children.length; i < len; i++) {
+			for (var i = 0, len = children.length; i &lt; len; i++) {
 				recursiveUpdate(children[i]);
 			}
 		}
 	};
 
 	this.recursiveCall = function(method,params){
-		for (var i = 0; i < scope.UI.length; i++) {
+		for (var i = 0; i &lt; scope.UI.length; i++) {
 			recurse(scope.UI[i],method,params);
 		}
 	};
@@ -524,7 +552,7 @@ function vn(settings){
 		var children = obj.getChildren();
 		if(obj[method])
 			obj[method](params);
-		for (var i = 0; i < children.length; i++) {
+		for (var i = 0; i &lt; children.length; i++) {
 			recurse(children[i],method,params);
 		}
 	};
@@ -533,8 +561,8 @@ function vn(settings){
 	 * Update function that is called every frame
 	 */
 	this.update = function(){
-		if(this.currentScene<0){
-			if(this.loadedImages >= this.imagePaths.length && this.loadedAudio >= this.audioPaths.length && this.loadedScenes >= this.scenePaths.length){
+		if(this.currentScene&lt;0){
+			if(this.loadedImages >= this.imagePaths.length &amp;&amp; this.loadedAudio >= this.audioPaths.length &amp;&amp; this.loadedScenes >= this.scenePaths.length){
 				this.currentScene++;
 				this.scenes[this.currentScene].currentFrame.loadFrame();
 			}
@@ -553,7 +581,7 @@ function vn(settings){
 	 */
 	this.draw = function(){
 		this.context.clearRect(0,0,this.settings.width,this.settings.height);
-		if(this.currentScene<0){
+		if(this.currentScene&lt;0){
 			var loaded = (this.loadedScenes+this.loadedImages+this.loadedAudio);
 			var total = (this.audioPaths.length+this.imagePaths.length+this.scenePaths.length);
 			this.context.fillStyle="grey";
@@ -568,7 +596,7 @@ function vn(settings){
 
 	//Initiates recursive scene-graph traversal
 	function drawScene(){
-		for(var i = 0; i < scope.UI.length;i++){
+		for(var i = 0; i &lt; scope.UI.length;i++){
 			var obj = scope.UI[i];
 			recursiveDraw(obj, 0, 0);
 		}
@@ -601,7 +629,7 @@ function vn(settings){
 		}
 		if(children.length>0){
 			var childrenHovered = false;
-			for (var i = 0, len = children.length; i < len; i++) {
+			for (var i = 0, len = children.length; i &lt; len; i++) {
 				recursiveDraw(children[i]);
 			}
 		}
@@ -609,7 +637,7 @@ function vn(settings){
 
 	//Draws touches on screen
 	function drawTouches(){
-		for (var i = 0; i<scope.touches.length;i++) {
+		for (var i = 0; i&lt;scope.touches.length;i++) {
 			scope.context.fillStyle="grey";
 			scope.context.beginPath();
 			scope.context.arc(scope.touches[i].x, scope.touches[i].y, scope.touches[i].radius || 25, 0, 2 * Math.PI, false);
@@ -646,19 +674,19 @@ function vn(settings){
 					return false;
 			}
 		}
-		for (var i = 0; i < scope.touches.length; i++) {
+		for (var i = 0; i &lt; scope.touches.length; i++) {
 			var collision = obj.isCollision(scope.touches[i].x,scope.touches[i].y,scope.touches[i].radius,scope.touches[i].radius);
 			if(collision){
-				if(!scope.mouse.hover && !scope.mouse.down)
+				if(!scope.mouse.hover &amp;&amp; !scope.mouse.down)
 					scope.mouse.hover = obj;
 				if(obj.onClick){
 					obj.onClick(scope);
 				}
 			}
 		}
-		for (var i = 0; i < scope.taps.length; i++) {
+		for (var i = 0; i &lt; scope.taps.length; i++) {
 			var collision = obj.isCollision(scope.taps[i].x,scope.taps[i].y,scope.taps[i].radius,scope.taps[i].radius);
-			if(collision && !scope.mouse.down){
+			if(collision &amp;&amp; !scope.mouse.down){
 				if(obj.onRelease){
 					obj.onRelease(scope);
 					scope.mouse.down = obj;
@@ -684,23 +712,23 @@ function vn(settings){
 			}
 		}
 		var collision = obj.isCollision(scope.mouse.x,scope.mouse.y,1,1);
-		if (collision && !scope.mouse.up){
+		if (collision &amp;&amp; !scope.mouse.up){
 			if(!scope.mouse.down){
 				scope.mouse.down = obj;
 				scope.mouse.hover = null;
 			}
-			if(collision && scope.mouse.click){
+			if(collision &amp;&amp; scope.mouse.click){
 				if(obj.onClick){
 					obj.onClick(scope);		
 					return true;
 				}
 			} 
-		}else if(collision && scope.mouse.click){
+		}else if(collision &amp;&amp; scope.mouse.click){
 			if(obj.onClick){
 				obj.onClick(scope);
 				return true;
 			}
-		} else if (collision && scope.mouse.clickRelease){
+		} else if (collision &amp;&amp; scope.mouse.clickRelease){
 			if(obj.onRelease){
 				obj.onRelease(scope);
 				scope.mouse.down = obj;
@@ -708,7 +736,7 @@ function vn(settings){
 				return true;
 			}
 		} else if(collision){
-			if(!scope.mouse.hover && !scope.mouse.down)
+			if(!scope.mouse.hover &amp;&amp; !scope.mouse.down)
 				scope.mouse.hover = obj;
 			return false;
 		} else {
@@ -723,7 +751,7 @@ function vn(settings){
 
 	//Bounding box collision detection
 	var rectCollision=function(rect1x, rect1y, rect1w, rect1h, rect2x, rect2y, rect2w, rect2h){
-		return rect1x+rect1w > rect2x && rect1x < (rect2x + rect2w) && rect1y+rect1h > rect2y && rect1y < (rect2y + rect2h);
+		return rect1x+rect1w > rect2x &amp;&amp; rect1x &lt; (rect2x + rect2w) &amp;&amp; rect1y+rect1h > rect2y &amp;&amp; rect1y &lt; (rect2y + rect2h);
 	};
 
 	var errorMessage = "vn.js error: ";
@@ -802,7 +830,7 @@ function vn(settings){
 		//Plays sound. If it needs to create multiple sounds, it creates
 		//another child and plays that.
 		this.play=function(volume,multiple){
-			if(a(volume) && this.element.volume!=volume)
+			if(a(volume) &amp;&amp; this.element.volume!=volume)
 				this.element.volume=volume;
 			if(a(multiple))
 				multiple=false;
@@ -917,7 +945,7 @@ function vn(settings){
 
 		this.isCollision = function(rect2x, rect2y, rect2w, rect2h){
 			var rect1x = this.getGlobalX(), rect1y = this.getGlobalY(), rect1w = this.getWidth(), rect1h = this.getHeight();
-			return (rect1x+rect1w) > rect2x && rect1x < (rect2x + rect2w) && rect1y+rect1h > rect2y && rect1y < (rect2y + rect2h);
+			return (rect1x+rect1w) > rect2x &amp;&amp; rect1x &lt; (rect2x + rect2w) &amp;&amp; rect1y+rect1h > rect2y &amp;&amp; rect1y &lt; (rect2y + rect2h);
 		};
 
 		this.getChildren = function(){
@@ -963,7 +991,7 @@ function vn(settings){
 	 * @param  {Number} options.heightPercent Percentage value of object's height
 	 */
 	this.responsiveObject = function(options){
-		if((a(options.xPercent) && a(options.x)) || (a(options.yPercent) && a(options.y)) || (a(options.width) && a(options.widthPercent)) || (a(options.height) && a(options.heightPercent))){
+		if((a(options.xPercent) &amp;&amp; a(options.x)) || (a(options.yPercent) &amp;&amp; a(options.y)) || (a(options.width) &amp;&amp; a(options.widthPercent)) || (a(options.height) &amp;&amp; a(options.heightPercent))){
 			error("Missing required parameters. Parameter format: ");
 			console.log(responsiveButtonParameter);
 			return false;
@@ -1171,13 +1199,13 @@ function vn(settings){
 			console.log(this);
 		});
 		var textDraw = function(){
-			if(textMatrix.length<=0 || (lastHeight!=this.getHeight() || lastWidth!=this.getWidth()))
+			if(textMatrix.length&lt;=0 || (lastHeight!=this.getHeight() || lastWidth!=this.getWidth()))
 				this.format();
 			if(this.showSize){
 				scope.context.fillStyle = "rgba(0,0,0,0.5)";
 				scope.context.fillRect(this.getGlobalX(),this.getGlobalY(),this.getWidth(),this.getHeight());
 			}
-			for(var i = 0;i<textMatrix.length;i++){
+			for(var i = 0;i&lt;textMatrix.length;i++){
 				if(!(this.getGlobalY()+(this.fontSize+this.lineHeight)*(i+1)>=this.getHeight()+this.getGlobalY())){
 					scope.context.font = this.fontSize+"px "+this.font;
 					scope.context.fillStyle = this.fontColor;
@@ -1192,7 +1220,7 @@ function vn(settings){
 			var lastSpace= 0;
 			textMatrix = [];
 			scope.context.font = obj.fontSize+"px "+obj.font;
-			for(var i = 0,count = text.length;i<count;i++){
+			for(var i = 0,count = text.length;i&lt;count;i++){
 				if(text[i]==" ")
 					lastSpace = i;
 				if(scope.context.measureText(text.substr(0,i)).width>=obj.getWidth()-10){
@@ -1247,7 +1275,7 @@ function vn(settings){
 		var type = function(obj){
 			lastHeight = obj.getHeight();
 			lastWidth = obj.getWidth();
-			if(textMatrix.length<=0)
+			if(textMatrix.length&lt;=0)
 				textMatrix.push("");
 			index++;
 			typed++;
@@ -1293,17 +1321,17 @@ function vn(settings){
 			matrixIndex = 0;
 			typed = 0;
 			scope.context.font = obj.fontSize+"px "+obj.font;
-			for(var i = 0,count = x;i<count;i++){
+			for(var i = 0,count = x;i&lt;count;i++){
 				type(obj);	
 			}
 		};
 
 		this.type = function(){
-			if(this.lastTyped<0)
+			if(this.lastTyped&lt;0)
 				this.lastTyped = Date.now();
 			var value = Math.floor((Date.now()-this.lastTyped)/this.speed);
 			if(value>0){
-				for(var i = 0; i<value;i++)
+				for(var i = 0; i&lt;value;i++)
 					type(this);
 				this.lastTyped = Date.now();
 			}
@@ -1317,7 +1345,7 @@ function vn(settings){
 				scope.context.fillStyle = "rgba(0,0,0,0.5)";
 				scope.context.fillRect(this.getGlobalX(),this.getGlobalY(),this.getWidth(),this.getHeight());
 			}
-			for(var i = 0;i<textMatrix.length;i++){
+			for(var i = 0;i&lt;textMatrix.length;i++){
 				if(!(this.getGlobalY()+(this.fontSize+this.lineHeight)*(i+1)>=this.getHeight()+this.getGlobalY())){
 					scope.context.font = this.fontSize+"px "+this.font;
 					scope.context.fillStyle = this.fontColor;
@@ -1336,7 +1364,7 @@ function vn(settings){
 	 * @extends responsiveObject
 	 */
 	this.image = function(options){
-		if(options.image && a(options.width) && a(options.height)){
+		if(options.image &amp;&amp; a(options.width) &amp;&amp; a(options.height)){
 			options.width = options.image.width;
 			options.height = options.image.height;
 		}
@@ -1378,13 +1406,13 @@ function vn(settings){
 
 		this.stop = function(elements){
 			var sounds = [];
-			for (var i = 0; i < elements.length; i++) {
+			for (var i = 0; i &lt; elements.length; i++) {
 				if(elements[i].audioElementIndex>=0){
 					sounds.push(elements[i].audioElementIndex);
 				}
 			}
 			console.log(sounds);
-			if(this.audioElementIndex>=0 && sounds.indexOf(this.audioElementIndex)<0){
+			if(this.audioElementIndex>=0 &amp;&amp; sounds.indexOf(this.audioElementIndex)&lt;0){
 				scope.audio[this.audioElementIndex].stop();
 			}
 		};
@@ -1471,7 +1499,7 @@ function vn(settings){
 	this.scene = function(options){
 		var init = function(obj){
 			//Add frames to scene
-			for(var i = 0; i<options.frames.length;i++){
+			for(var i = 0; i&lt;options.frames.length;i++){
 				var frame = new scope.frame(options.frames[i]);
 				obj.search[frame.label] = frame;
 				obj.frames.push(frame);
@@ -1479,13 +1507,13 @@ function vn(settings){
 					obj.currentFrame = frame;
 			}
 			//adds connections
-			for(var i = 0; i<options.frames.length;i++){
+			for(var i = 0; i&lt;options.frames.length;i++){
 				obj.frames[i].connections=[];
 				var connections = options.frames[i].connections?options.frames[i].connections:[];
-				for(var x = 0, count = connections.length; x < count;x++){
+				for(var x = 0, count = connections.length; x &lt; count;x++){
 					if(connections[x]){
 						if(connections[x] == "next"){
-							if(i+1<obj.frames.length){
+							if(i+1&lt;obj.frames.length){
 								obj.frames[i].connections.push(obj.frames[i+1]);
 							}
 						} else {
@@ -1538,7 +1566,7 @@ function vn(settings){
 	 */
 	this.frame = function(options){
 		var init = function(obj){
-			for(var i = 0; i<options.objects.length;i++){
+			for(var i = 0; i&lt;options.objects.length;i++){
 				switch(options.objects[i].type){
 					case "button":
 						obj.objects.push(new scope.button(options.objects[i]));
@@ -1577,3 +1605,26 @@ function vn(settings){
 }
 
 
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="vn.html">vn</a></li><li><a href="vn_audioFile.html">audioFile</a></li><li><a href="vn_bgMusic.html">bgMusic</a></li><li><a href="vn_button.html">button</a></li><li><a href="vn_custom.html">custom</a></li><li><a href="vn_image.html">image</a></li><li><a href="vn_imageButton.html">imageButton</a></li><li><a href="vn_key.html">key</a></li><li><a href="vn_object.html">object</a></li><li><a href="vn_responsiveObject.html">responsiveObject</a></li><li><a href="vn_scene.html">scene</a></li><li><a href="vn_sound.html">sound</a></li><li><a href="vn_textArea.html">textArea</a></li><li><a href="vn_typewriter.html">typewriter</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Wed Dec 02 2015 01:23:26 GMT-0800 (Pacific Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
