@@ -581,7 +581,7 @@ function vn(settings){
 		if(this.currentScene<0){
 			if(this.loadedScripts >= this.scriptPaths.length && this.loadedImages >= this.imagePaths.length && this.loadedAudio >= this.audioPaths.length && this.loadedScenes >= this.scenePaths.length){
 				this.currentScene++;
-				if(this.scenes.length>=0)
+				if(this.scenes.length>0)
 					this.scenes[this.currentScene].currentFrame.loadFrame();
 			}
 		} else {
