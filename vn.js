@@ -68,6 +68,14 @@ function vn(settings){
 	this.scenePaths = [];
 
 	/**
+	 * An array of script paths to load on init.
+	 * Set these to an array of all of the script URLS and vn.js will 
+	 * turn them into functions and put them in the scripts option.
+	 * @type {Array}
+	 */
+	this.scriptPaths = [];
+
+	/**
 	 * Keeps track of how many audio assets are loaded.
 	 * @type {Number}
 	 */
@@ -502,7 +510,7 @@ function vn(settings){
 	var addScript = function(data,index){
 		scope.scriptData[index] = (data);
 		try{
-			scope.scripts[index].script = (new Function(data));
+			scope.scripts[index].script = (new Function(["scope","args"],data));
 			scope.loadedScripts++;
 		} catch(e){
 			error("Script could not be read");
@@ -573,7 +581,8 @@ function vn(settings){
 		if(this.currentScene<0){
 			if(this.loadedScripts >= this.scriptPaths.length && this.loadedImages >= this.imagePaths.length && this.loadedAudio >= this.audioPaths.length && this.loadedScenes >= this.scenePaths.length){
 				this.currentScene++;
-				this.scenes[this.currentScene].currentFrame.loadFrame();
+				if(this.scenes.length>=0)
+					this.scenes[this.currentScene].currentFrame.loadFrame();
 			}
 		} else {
 			if(this.isKeyDown("left"))
