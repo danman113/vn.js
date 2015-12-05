@@ -19,7 +19,7 @@
 [X] Add playSound class
 [X] Add update loop
 [X] Add custom class
-[ ] Add script support
+[X] Add script support
 [ ] Add more comments for classes
 */
 
@@ -86,6 +86,12 @@ function vn(settings){
 	this.loadedScenes = 0;
 
 	/**
+	 * Keeps track of how many scripts are loaded.
+	 * @type {Number}
+	 */
+	this.loadedScripts = 0;
+
+	/**
 	 * Contains all loaded audio assets.
 	 * @type {Array}
 	 */
@@ -105,10 +111,22 @@ function vn(settings){
 	this.sceneData = [];
 
 	/**
-	 * Contains all scenes. Contains all main data used in vn.js
+	 * Contains all scenes. Contains all main data used in vn.js.
 	 * @type {Array}
 	 */
 	this.scenes = [];
+
+	/**
+	 * Contains all data loaded from scriptPaths. Objects are turned into functions.
+	 * @type {Array}
+	 */
+	this.scriptData = [];
+
+	/**
+	 * Contains all scripts loaded.
+	 * @type {Array}
+	 */
+	this.scripts = [];
 
 
 	//Scene\\
@@ -396,6 +414,7 @@ function vn(settings){
 		this.loadScenes();
 		this.loadAudio();
 		this.loadImages();
+		this.loadScripts();
 		requestAnimationFrame(disp);
 	};
 
@@ -479,6 +498,24 @@ function vn(settings){
 			sendHTTP("get",this.scenePaths[i],{},addScene);
 		}
 	};
+
+	var addScript = function(data,index){
+		scope.scriptData[index] = (data);
+		try{
+			scope.scripts[index].script = (new Function(data));
+			scope.loadedScripts++;
+		} catch(e){
+			error("Script could not be read");
+			console.error(e);
+		}
+	};
+	this.loadScripts = function(){
+		for(var i=0;i<this.scriptPaths.length;i++){
+			sendHTTP("get",this.scriptPaths[i],{},addScript,function(){},i);
+			scope.scripts.push({index:i,script:null});
+			scope.scriptData.push(null);
+		}
+	};
 	
 
 	//Display loop\\
@@ -534,7 +571,7 @@ function vn(settings){
 	 */
 	this.update = function(){
 		if(this.currentScene<0){
-			if(this.loadedImages >= this.imagePaths.length && this.loadedAudio >= this.audioPaths.length && this.loadedScenes >= this.scenePaths.length){
+			if(this.loadedScripts >= this.scriptPaths.length && this.loadedImages >= this.imagePaths.length && this.loadedAudio >= this.audioPaths.length && this.loadedScenes >= this.scenePaths.length){
 				this.currentScene++;
 				this.scenes[this.currentScene].currentFrame.loadFrame();
 			}
@@ -751,7 +788,7 @@ function vn(settings){
 	};
 
 	//Cross platform xmlhttp request 
-	var sendHTTP = function(method,url,postdata,callback){
+	var sendHTTP = function(method,url,postdata,callback,error,params){
 		var httpRequest;
 		if (window.XMLHttpRequest) { // Mozilla, Safari, IE7+ ...
 			httpRequest = new XMLHttpRequest();
@@ -761,9 +798,12 @@ function vn(settings){
 		httpRequest.onreadystatechange = function(){
 			if(httpRequest.readyState === 4){
 				if(httpRequest.status === 200 || httpRequest.status === 0){
-					callback(httpRequest.responseText);
+					callback(httpRequest.responseText,params);
 				} else {
 					console.log("Error "+httpRequest.status);	
+					if(error){
+						error(params);
+					}
 				}
 				
 			}
