@@ -325,7 +325,7 @@ function vn(settings){
 	};
 
 	//Makes it so mouse.click and mouse.clickRelease work
-	var clickManager = function(){
+	this.clickManager = function(){
 		if(!scope.mouse.lastMouseUp  && scope.mouse.up){
 			scope.mouse.clickRelease=true;
 		} else {
@@ -539,7 +539,7 @@ function vn(settings){
 		requestAnimationFrame(disp);
 	};
 
-	var updateUI = function(){
+	this.updateUI = function(){
 		for(var i = 0; i < scope.UI.length;i++){
 			var obj = scope.UI[i];
 			recursiveUpdate(obj, 0, 0);
@@ -587,10 +587,10 @@ function vn(settings){
 		} else {
 			if(this.isKeyDown("left"))
 				console.log("left");
-			clickManager();
-			handleClicks();
-			updateUI();
-			tapManager();
+			this.clickManager();
+			this.handleClicks();
+			this.updateUI();
+			this.tapManager();
 		}
 	};
  
@@ -664,7 +664,7 @@ function vn(settings){
 	}
 
 	//Initiates click events
-	var handleClicks = function(){
+	this.handleClicks = function(){
 		scope.mouse.hover = null;
 		scope.mouse.down = null;
 		for (var i = scope.UI.length - 1; i >= 0; i--) {
@@ -676,8 +676,8 @@ function vn(settings){
 		}
 	};
 
-	//
-	var tapManager = function(){
+	//Helps with taps?
+	this.tapManager = function(){
 		scope.taps = [];
 	};
 
