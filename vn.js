@@ -21,6 +21,8 @@
 [X] Add custom class
 [X] Add script support
 [X] Add support for high ppi screens
+[ ] Add sliders
+[ ] Add input areas
 [ ] Add more comments for classes
 */
 
@@ -311,28 +313,28 @@ function vn(settings){
 			return false;
 		//Gets pixel ratio
 		var devicePixelRatio = window.devicePixelRatio || 1,
-		backingStoreRatio = this.context.webkitBackingStorePixelRatio ||
-							this.context.mozBackingStorePixelRatio ||
-							this.context.msBackingStorePixelRatio ||
-							this.context.oBackingStorePixelRatio ||
-							this.context.backingStorePixelRatio || 1,
+		backingStoreRatio = scope.context.webkitBackingStorePixelRatio ||
+							scope.context.mozBackingStorePixelRatio ||
+							scope.context.msBackingStorePixelRatio ||
+							scope.context.oBackingStorePixelRatio ||
+							scope.context.backingStorePixelRatio || 1,
 		ratio = devicePixelRatio / backingStoreRatio;
 		//updatesCanvas
 		if (devicePixelRatio !== backingStoreRatio) {
 			console.log("Device pixel ratio updated!");
-			var oldWidth = this.canvas.width;
-			var oldHeight = this.canvas.height;
+			var oldWidth = scope.canvas.width;
+			var oldHeight = scope.canvas.height;
 			
-			this.canvas.width = oldWidth * ratio;
-			this.canvas.height = oldHeight * ratio;
+			scope.canvas.width = oldWidth * ratio;
+			scope.canvas.height = oldHeight * ratio;
 			
-			this.canvas.style.width = oldWidth + 'px';
-			this.canvas.style.height = oldHeight + 'px';
+			scope.canvas.style.width = oldWidth + 'px';
+			scope.canvas.style.height = oldHeight + 'px';
 			
 			// now scale the context to counter
 			// the fact that we've manually scaled
 			// our canvas element
-			this.context.scale(ratio, ratio);
+			scope.context.scale(ratio, ratio);
 			return true;
 		}
 		return false;
