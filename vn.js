@@ -20,6 +20,7 @@
 [X] Add update loop
 [X] Add custom class
 [X] Add script support
+[X] Add support for high ppi screens
 [ ] Add more comments for classes
 */
 
@@ -297,7 +298,45 @@ function vn(settings){
 		scope.settings.height = window.innerHeight;
 		scope.canvas.width = window.innerWidth;
 		scope.canvas.height = window.innerHeight;
+		adjustPPI();
 	};
+	
+	/**
+	 * Adjusts the PPI of the canvas based on the device aspect ratio.
+	 * Only works if the project is fullWidth
+	 *
+	 */
+	var adjustPPI = function(){
+		if(!scope.settings.fullscreen)
+			return false;
+		//Gets pixel ratio
+		var devicePixelRatio = window.devicePixelRatio || 1,
+		backingStoreRatio = this.context.webkitBackingStorePixelRatio ||
+							this.context.mozBackingStorePixelRatio ||
+							this.context.msBackingStorePixelRatio ||
+							this.context.oBackingStorePixelRatio ||
+							this.context.backingStorePixelRatio || 1,
+		ratio = devicePixelRatio / backingStoreRatio;
+		//updatesCanvas
+		if (devicePixelRatio !== backingStoreRatio) {
+			console.log("Device pixel ratio updated!");
+			var oldWidth = this.canvas.width;
+			var oldHeight = this.canvas.height;
+			
+			this.canvas.width = oldWidth * ratio;
+			this.canvas.height = oldHeight * ratio;
+			
+			this.canvas.style.width = oldWidth + 'px';
+			this.canvas.style.height = oldHeight + 'px';
+			
+			// now scale the context to counter
+			// the fact that we've manually scaled
+			// our canvas element
+			this.context.scale(ratio, ratio);
+			return true;
+		}
+		return false;
+	}
 
 	//Mouse handlers, simple enough
 	var mouseUp = function(e){
@@ -423,7 +462,8 @@ function vn(settings){
 		this.loadAudio();
 		this.loadImages();
 		this.loadScripts();
-		requestAnimationFrame(disp);
+		adjustPPI();
+		window.requestAnimationFrame(disp);
 	};
 
 	//Parese main argument and sets default values
@@ -536,7 +576,7 @@ function vn(settings){
 			scope.draw(deltaTime);
 		this.frameCount++;
 		lastTime = scope.now();
-		requestAnimationFrame(disp);
+		window.requestAnimationFrame(disp);
 	};
 
 	this.updateUI = function(){
